@@ -1,0 +1,132 @@
+---
+title: "Import and fit microbial plate growth data"
+author: "Maximilian Berthold, Douglas A. Campbell"
+date: "`r format(Sys.Date())`"
+output:
+  html_document:
+    df_print: paged
+    code_folding: hide
+---
+
+This .Rmd imports Molecular Device Absorbance data, with data reorganized into columns labelled by treatment.
+
+```{r load libraries, echo=FALSE, message = FALSE, warning = FALSE} 
+# libraries; Note check actual dependencies
+library(tidyverse) #core tidyverse packages
+library(growthrates)
+
+```
+
+
+# Settings for file import
+
+# Note: The .tsv file exported from the Molecular Dynamics software with encoding UTF16LE had embedded null characters that caused problems upon import.
+As a hacked solution, download the .tsv from 'Teams'.
+Import the .tsv into a new GoogleSheet.
+Delete the first two rows of the file.
+Export from GoogleSheet as .csv.
+Move the .csv to the .Rproj folder.
+A better way would be code to read the problematic UTF16LE file with null characters.
+The issue relates to a complex file structure exported from Molecular Dynamics software.
+```{r variable names for file import & processing MOLECULAR DEVICES}
+Project <- "WildYeast"
+
+#set variables for file import & processing
+DataPath <- file.path("..", "Data", "RawData", fsep = .Platform$file.sep)
+file_id <- ".csv"
+
+# DataOneDrive <- "~/OneDrive - Mount Allison University/BIOL2201_2024/StudentDataTest"
+
+```
+
+# List Data file(s)
+```{r datafiles}
+DataFiles <- list.files(path = DataPath, pattern = file_id, full.names = TRUE)
+
+DataFiles
+
+FileEncodeMD <- as.character(guess_encoding(file = DataFiles[1])[1,1])
+FileEncodeMD
+```
+
+# Read ODData file(s) into form readable by R
+```{r dataread}
+ODData <- readr::read_csv(file =  DataFiles[1])
+
+head(ODData)
+
+
+#data.table::fread(text = readLines(DataFiles[1], skipNul = T))
+
+
+```
+
+
+```{r read all files}
+#code for reading multiple files, if needed
+# read_delim_plus <- function(flnm, delimiter, headerrows, fileencode){read_delim(flnm, delim = delimiter,  col_names = TRUE,  skip = headerrows, escape_double = FALSE,  locale = locale(encoding = fileencode), trim_ws = TRUE) |>
+#     mutate(Filename = flnm)
+#   }
+# 
+# ODData <- DataFiles |>
+#   map_df(~read_delim_plus(flnm = ., delimiter = DelimiterMD,  headerrows = HeaderRowsMD,  fileencode = FileEncodeMD))
+# 
+# head(ODData)
+```
+
+# Molecular Dynamics exports problematic variable names; fix them
+```{r variable names}
+colnames(ODData)
+```
+
+```{r rename variables}
+
+ODData <- ODData |>
+ rename("Temp_C" = "Temperature(¡C)")
+
+head(ODData)
+```
+
+# Lost labels for OD680 & OD720 in hacked import; regenerate them.
+
+```{r OD labels}
+
+#remove blank rows by filtering out rows where Temp_C is NA
+ODData <- ODData |>
+  filter(!is.na(Temp_C))
+
+#this is a hack solution, knowing there are only 15 rows of data
+#better way would be to keep the OD settings during import
+ODData <- ODData |>
+  mutate(nm = ifelse(row_number() %in% c(1:15), 680, 720), .before = Time)
+
+```
+
+
+# For plotting it is easier to have data in 'long' format, where Well becomes a Value of a Variable, rather than a separate variable for each well.
+```{r ODData long}
+
+ODDataLong <- pivot_longer(ODData, cols = -c(nm, Time, Temp_C), names_to = "Well", values_to = "OD")
+
+ODDataLong |>
+  ggplot() +
+  geom_point(aes(x = Time, y = OD)) +
+  facet_grid(cols = vars(nm))
+```
+
+
+XXXXX24 Oct 2024XXXXStop
+
+```{r growthrates package spline fit}
+SplineRates_nest <- ODDataLong |>
+  nest(data = -c(Treatment, Media)) |>
+  mutate(SplineFit = purrr::map(data, ~growthrates::fit_spline(.$Time, .$OD_600))) |>
+  mutate(mumax = purrr::map(SplineFit, ~pluck(., "par", "mumax"))) |>
+  mutate(rsquared = purrr::map(SplineFit, ~pluck(., "rsquared"))) 
+
+```
+
+```{r export data}
+write_csv(x = SplineRates_nest |> select(c(Media, Treatment, mumax, rsquared)), file = "MuMaxEstimates.csv")
+```
+
