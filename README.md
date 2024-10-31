@@ -1,4 +1,4 @@
-# Project Title
+# Yeast Project
 
 ## Summary
 
