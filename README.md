@@ -1,4 +1,4 @@
-# Yeast Project
+## Yeast project
 
 ## Summary
 
@@ -20,9 +20,6 @@ Provide a brief description of the project - 150 words.
 
 - Provide links to any data used from external providers .
 
-## Funding sources
-
-- List your funding sources, grant names, and grant numbers as applicable.
 
 ## Keywords
 
@@ -33,7 +30,7 @@ List keywords separated by commas
 - Sensitive Data Flag - Human Participants:  NO
 - Sensitive Data Flag - Indigenous Partnerships: YES or NO
 - Sensitive Data Flag - Government Partnerships: YES or NO
-- Sensitive Data Flag - Industry Partnerships: YES or NO
+- Sensitive Data Flag - Industry Partnerships: NO
 - Access Restrictions
 
 ## Software  
@@ -70,10 +67,14 @@ Clean data in formats for long-term storage. Modified data with the appropriate 
 Processed data in formats for long-term storage.
 
 ### Code
-
+ 
 Scripts for processing raw data into cleaned data, outside derived code, and user derived code.
 A folder OldR is used to store outdated code.
 Typically organize .Rmd in modules; Import; Tidy; Process saving .Rds out of each step.
+
+
+This .Rmd imports Molecular Device Absorbance data, with data reorganized into columns labelled by treatment.
+
 
 ### Docs
 
