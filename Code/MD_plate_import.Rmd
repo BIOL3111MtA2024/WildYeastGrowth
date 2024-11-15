@@ -39,6 +39,11 @@ file_id <- ".csv"
 
 ```
 
+
+```{r read metadata}
+# left join
+```
+
 # List Data file(s)
 ```{r datafiles}
 DataFiles <- list.files(path = DataPath, pattern = file_id, full.names = TRUE)
@@ -100,6 +105,7 @@ ODData <- ODData |>
 ODData <- ODData |>
   mutate(nm = ifelse(row_number() %in% c(1:15), 680, 720), .before = Time)
 
+head(ODData)
 ```
 
 
@@ -112,21 +118,29 @@ ODDataLong |>
   ggplot() +
   geom_point(aes(x = Time, y = OD)) +
   facet_grid(cols = vars(nm))
+
+head(ODDataLong)
 ```
 
 
-XXXXX24 Oct 2024XXXXStop
+
+```{r save rds}
+saveRDS(ODDataLong, file = file.path("..", "Data", "ProcessedData", "ODDataLong.rds"))
+```
+
+
+
 
 ```{r growthrates package spline fit}
-SplineRates_nest <- ODDataLong |>
-  nest(data = -c(Treatment, Media)) |>
-  mutate(SplineFit = purrr::map(data, ~growthrates::fit_spline(.$Time, .$OD_600))) |>
-  mutate(mumax = purrr::map(SplineFit, ~pluck(., "par", "mumax"))) |>
-  mutate(rsquared = purrr::map(SplineFit, ~pluck(., "rsquared"))) 
+#SplineRates_nest <- ODDataLong |>
+  #nest(data = -c(nm , Well)) |>
+ # mutate(SplineFit = purrr::map(data, ~growthrates::fit_spline(.$Time, .$OD))) |>
+ # mutate(mumax = purrr::map(SplineFit, ~pluck(., "par", "mumax"))) |>
+ # mutate(rsquared = purrr::map(SplineFit, ~pluck(., "rsquared"))) 
 
 ```
 
 ```{r export data}
-write_csv(x = SplineRates_nest |> select(c(Media, Treatment, mumax, rsquared)), file = "MuMaxEstimates.csv")
+# write_csv(x = SplineRates_nest |> select(c(Media, Treatment, mumax, rsquared)), file = "MuMaxEstimates.csv")
 ```
 
