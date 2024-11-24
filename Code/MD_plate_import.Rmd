@@ -128,6 +128,101 @@ head(ODDataLong)
 saveRDS(ODDataLong, file = file.path("..", "Data", "ProcessedData", "ODDataLong.rds"))
 ```
 
+```{r}
+View(ODDataLong)
+```
+
+```{r}
+library(dplyr)
+
+# Merge ODData with ATMetaData
+Merged_ATData <- ODDataLong %>%
+  left_join(ATMetaData, by = "Well")
+
+```
+
+```{r}
+library(lubridate)
+
+# Convert Time to measurement #
+Merged_ATData <- Merged_ATData %>%
+  mutate(Time_numeric = as.numeric(hms(Time)))  
+```
+
+```{r}
+View(Merged_ATData)
+```
+
+```{r}
+library(dplyr)
+
+# Exclude wells G10, G11, G12, H10, H11, H12
+Merged_ATData <- Merged_ATData %>%
+  filter(!Well %in% c("G10", "G11", "G12", "H10", "H11", "H12"))
+
+# Verify
+table(Merged_ATData$Well) 
+```
+
+
+```{r}
+# Filter data for OD 680 nm
+Merged_ATData_680 <- Merged_ATData %>%
+  filter(nm == 680)
+
+# Filter data for OD 720 nm
+Merged_ATData_720 <- Merged_ATData %>%
+  filter(nm == 720)
+```
+
+```{r}
+library(dplyr)
+library(lubridate)
+
+Merged_ATData <- Merged_ATData %>%
+  mutate(Time_numeric = as.numeric(hms(Time)) / 3600)  # Converts to hours
+```
+
+```{r}
+#Verify dataset structure
+str(Merged_ATData)  
+head(Merged_ATData) 
+```
+```{r}
+ggplot(Merged_ATData_720, aes(x = Time_numeric, y = OD, color = as.factor(Ethanol_Percent), group = Well)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ Sample_ID) + 
+  labs(
+    title = "Growth Curves for Each Sample (OD at 720 nm)",
+    x = "Time (hours)", 
+    y = "Optical Density (OD720)",
+    color = "Ethanol (%)"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "bottom"  
+  )
+```
+```{r}
+ggplot(Merged_ATData_680, aes(x = Time_numeric, y = OD, color = as.factor(Ethanol_Percent), group = Well)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ Sample_ID) +  
+  labs(
+    title = "Growth Curves for Each Sample (OD at 680 nm)",
+    x = "Time (hours)", 
+    y = "Optical Density (OD680)",
+    color = "Ethanol (%)"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "bottom"  
+  )
+```
+
 
 
 
