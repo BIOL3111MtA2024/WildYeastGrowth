@@ -258,17 +258,17 @@ library(ggplot2)
 
 ```{r}
 ggplot(VitalityFermentationMetaData, aes(x = as.factor(Sample_ID), y = Viability_Percent, fill = as.factor(Sample_ID))) +
-  geom_bar(stat = "identity", alpha = 0.7) +  # Bars with color based on Sample_ID
-  geom_text(aes(label = round(Viability_Percent, 1)), vjust = -0.5, hjust = 0.5, size = 4, color = "black") +  # Centered data labels
+  geom_bar(stat = "identity", alpha = 0.7) +  # bars Sample_ID
+  geom_text(aes(label = round(Viability_Percent, 1)), vjust = -0.5, hjust = 0.5, size = 4, color = "black") +  # made the data lables centred that show the percent of living cells
   theme_minimal() +
   labs(title = "Viability Percent by Sample ID",
        x = "Sample ID",
        y = "Viability Percent") +
   theme(
     axis.text.x = element_text(angle = 0, hjust = 0.5),  # Center x-axis labels
-    legend.position = "none"  # Remove legend if unnecessary
+    legend.position = "none"  # Remove legend do not need
   ) +
-  scale_fill_manual(values = c("blue", "green", "red", "purple", "orange", "cyan"))  # Customize bar colors
+  scale_fill_manual(values = c("orange", "orange", "orange", "orange", "orange", "orange"))  # Customize bar colors to orange like beer
 ```
 
 
