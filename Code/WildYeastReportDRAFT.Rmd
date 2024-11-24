@@ -114,6 +114,97 @@ Catalog <- as.data.frame(Catalog) %>%
   mutate(ExpDate = lubridate::ymd(ExpDate))
 ```
 
+```{r}
+# Install the googlesheets4 package if not already installed
+install.packages("googlesheets4")
+
+# Load the googlesheets4 library
+library(googlesheets4)
+```
+```{r Retrieve ATMetaData}
+# Authenticate with Google Sheets (you only need to do this once)
+gs4_auth()
+
+# Define the Google Sheet URL (replace with your actual URL)
+sheet_url <- "https://docs.google.com/spreadsheets/d/17dDzASxhWDbVpQFXb201vT2oB0rkyi2h4gG33ArOaDA/edit?usp=sharing"
+
+# Read the Google Sheet into R as a data frame
+ATMetaData <- read_sheet(sheet_url)
+
+# View the imported data (optional)
+View(ATMetaData)
+```
+
+```{r Retrieve SpecificGravityMetaData}
+# Authenticate with Google Sheets (you only need to do this once)
+gs4_auth()
+
+# Define the Google Sheet URL (replace with your actual URL)
+sheet_url <- "https://docs.google.com/spreadsheets/d/15Qd3DYkeRX4FCy84Uw9ns9L6Bq6P959csP-opdGvBME/edit?usp=sharing"
+
+# Read the Google Sheet into R as a data frame
+SpecificGravityMetaData <- read_sheet(sheet_url)
+
+# View the imported data (optional)
+View(SpecificGravityMetaData)
+```
+
+```{r Retrieve BrothPlateMetaData}
+# Authenticate with Google Sheets (you only need to do this once)
+gs4_auth()
+
+# Define the Google Sheet URL (replace with your actual URL)
+sheet_url <- "https://docs.google.com/spreadsheets/d/118YF2qZqtC5yCfqyDeRaGQhgm5v8mn6wC_6ae1Rnyik/edit?usp=sharing"
+
+# Read the Google Sheet into R as a data frame
+BrothPlateMetaData <- read_sheet(sheet_url)
+
+# View the imported data (optional)
+View(BrothPlate1MetaData)
+```
+
+```{r Retrieve VitalityFermentationMetaData}
+# Authenticate with Google Sheets (you only need to do this once)
+gs4_auth()
+
+# Define the Google Sheet URL (replace with your actual URL)
+sheet_url <- "https://docs.google.com/spreadsheets/d/1mKZNT4blSBhuVf4K8_ddhGqOaep2aScUVqMXixWkkwI/edit?usp=sharing"
+
+# Read the Google Sheet into R as a data frame
+VitalityFermentationMetaData <- read_sheet(sheet_url)
+
+# View the imported data (optional)
+View(VitalityFermentationMetaData)
+```
+
+```{r Retrieve NotesMetaData}
+# Authenticate with Google Sheets (you only need to do this once)
+gs4_auth()
+
+# Define the Google Sheet URL (replace with your actual URL)
+sheet_url <- "https://docs.google.com/spreadsheets/d/1phYyUXKip9W4sfQH6zrZxw49RH5AH72zuFHsqgvMoTQ/edit?usp=sharing"
+
+# Read the Google Sheet into R as a data frame
+NotesMetaData <- read_sheet(sheet_url)
+
+# View the imported data (optional)
+View(NotesMetaData)
+```
+
+```{r Retrieve DataDictionary}
+# Authenticate with Google Sheets (you only need to do this once)
+gs4_auth()
+
+# Define the Google Sheet URL (replace with your actual URL)
+sheet_url <- "https://docs.google.com/spreadsheets/d/1YN_s-YRdM4j9t_c_l1Z4-Q53KQlURTlDpItovzZNd3g/edit?usp=sharing"
+
+# Read the Google Sheet into R as a data frame
+DataDictionary <- read_sheet(sheet_url)
+
+# View the imported data (optional)
+View(DataDictionary)
+```
+
 ## Function using data.table::fread to skip the beginning comments and start reading file after key word string set as variable Skip.  
 Function creates a new variable column Filename whose value will equal function input Flnm.
 This is useful for when reading in multiple files and tagging each data row with the name of the source file.
