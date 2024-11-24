@@ -84,11 +84,16 @@ head(ODData)
 colnames(ODData)
 ```
 
-```{r rename variables}
+```{r rename varible}
+library(dplyr)
 
-ODData <- ODData |>
- rename("Temp_C" = "Temperature(¡C)")
+# Rename column using pattern matching
+ODData <- ODData %>%
+  rename_with(~ gsub("Temperature.*", "Temp_C", .x))  # Replace any name starting with "Temperature"
+```
 
+
+```{r verify rename worked}
 head(ODData)
 ```
 
