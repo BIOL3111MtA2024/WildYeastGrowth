@@ -246,7 +246,7 @@ MultiData <- MultiFiles %>%
 
 
 
-
+code beneath is making a bar graph of the the vitality of the yeast samples tested and it indicates the percent of surving yeast of total yeast samples.
 
 ```{r}
 install.packages("ggplot2")
