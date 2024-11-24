@@ -1,5 +1,5 @@
 ---
-title: "Fermentation"
+title: "Wild Yeast Report DRAFT"
 date: "`r format(Sys.Date())`"
 author:
 - Douglas Campbell^1^*
@@ -122,6 +122,7 @@ install.packages("googlesheets4")
 # Load the googlesheets4 library
 library(googlesheets4)
 ```
+
 ```{r Retrieve ATMetaData}
 # Authenticate with Google Sheets (you only need to do this once)
 gs4_auth()
