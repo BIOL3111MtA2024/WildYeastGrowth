@@ -268,9 +268,9 @@ ggplot(VitalityFermentationMetaData, aes(x = as.factor(Sample_ID), y = Viability
     axis.text.x = element_text(angle = 0, hjust = 0.5),  # Center x-axis labels
     legend.position = "none"  # Remove legend do not need
   ) +
-  scale_fill_manual(values = c("orange", "orange", "orange", "orange", "orange", "orange"))  # Customize bar colours to orange like beer
+  scale_fill_manual(values = c("orange", "orange", "orange", "orange", "orange", "orange"))  # Customize bar colours to orange like beer 
 ```
-
+test 
 
 \newpage
 
