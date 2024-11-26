@@ -116,6 +116,9 @@ head(ODData)
 
 # For plotting it is easier to have data in 'long' format, where Well becomes a Value of a Variable, rather than a separate variable for each well.
 ```{r ODData long}
+library(tidyr)
+library(tidyverse) 
+library(growthrates)
 
 ODDataLong <- pivot_longer(ODData, cols = -c(nm, Time, Temp_C), names_to = "Well", values_to = "OD")
 
@@ -304,6 +307,49 @@ Merged_ATMetaData_MuMax <- SplineRates_results %>%
 View(Merged_ATMetaData_MuMax)
 ```
 
+```{r}
+# Remove rows with any NA values
+Merged_ATMetaData_MuMax_clean <- na.omit(Merged_ATMetaData_MuMax)
+
+# Check the result
+head(Merged_ATMetaData_MuMax_clean)
+```
+
+```{r}
+# Load necessary library
+library(ggplot2)
+
+# Plot with larger dimensions and improved readability
+ggplot(data_680, aes(x = Ethanol_Percent, y = mumax, color = as.factor(Replicate))) +
+  geom_point(size = 3) +                            # Larger points
+  geom_line(size = 1, aes(group = Replicate)) +     # Separate line for each replicate
+  facet_wrap(~ Sample_ID, scales = "free", ncol = 2) + # Two columns for better spacing
+  labs(
+    x = "Ethanol Concentration (%v/v)", 
+    y = "mumax",
+    color = "Replicate",                            # Legend title for replicates
+    title = "mumax vs Ethanol Concentration at 680 nm by Replicate"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),                   # Remove grid lines
+    axis.title = element_text(size = 18),           # Larger axis titles
+    axis.text = element_text(size = 14),            # Larger axis text
+    strip.text = element_text(size = 16, face = "bold"), # Larger facet labels
+    legend.text = element_text(size = 14),          # Larger legend text
+    legend.title = element_text(size = 16),         # Larger legend title
+    panel.border = element_rect(color = "black", fill = NA), # Add border around panels
+    plot.title = element_text(size = 20, face = "bold", hjust = 0.5), # Bold, centered title
+    strip.background = element_rect(fill = "lightgray", color = "black") # Gray background for facet labels
+  )
+
+# Save the plot with larger dimensions
+ggsave("mumax_680nm_triplicate_large_plot.png", width = 16, height = 10, dpi = 300)
+
+
+
+
+```
 
 
 ```{r}
