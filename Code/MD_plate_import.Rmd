@@ -238,9 +238,121 @@ ggplot(Merged_ATData_680, aes(x = Time_numeric, y = OD, color = as.factor(Ethano
   )
 ```
 
+```{r}
+Merged_ATData_clean <- Merged_ATData |> 
+  filter(!is.na(Time_numeric), !is.na(nm), is.finite(Time_numeric), is.finite(nm))
+```
+
+```{r}
+View(Merged_ATData_clean
+     )
+```
+
+```{r}
+# Count rows in each group
+Merged_ATData |> 
+  group_by(nm, Well) |> 
+  summarise(count = n()) |> 
+  arrange(count)
+
+```
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(growthrates)
+
+# Step 2: Spline Fitting and Parameter Extraction
+SplineRates_nest <- Merged_ATData |> 
+  group_by(nm, Well) |> 
+  nest() |> 
+  mutate(
+    # Fit spline with error handling
+    SplineFit = purrr::map(data, ~tryCatch(
+      growthrates::fit_spline(.$Time_numeric, .$OD),  # Fit spline
+      error = function(e) NULL  # Handle errors gracefully
+    )),
+    # Extract maximum growth rate (mumax) or return NA if fit fails
+    mumax = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "par", "mumax") else NA_real_),
+    # Extract R-squared value or return NA if fit fails
+    rsquared = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "rsquared") else NA_real_)# Averaging separately for 608 nm and 720 nm
+    ) |> 
+  ungroup()
+
+# Step 3: View and Save Results
+# Select and display key results
+SplineRates_results <- SplineRates_nest |> 
+  select(nm, Well, mumax, rsquared)
+
+# View the results
+print(SplineRates_results)
+
+# Save the results to a CSV file (optional)
+write.csv(SplineRates_results, "SplineRates_results.csv", row.names = FALSE)
+
+```
+#NEED to left join this with metadata so i can find average mumax and r squared
+```{r}
+# Group by Sample_ID, Ethanol_Percent, and Time_numeric to average mumax and rsquared
+MuMax_Averaged <- SplineRates_nest |> 
+  group_by(Sample_ID, Ethanol_Percent, Time_numeric) |> 
+  summarise(
+    avg_mumax = mean(mumax, na.rm = TRUE),    # Average mumax
+    avg_rsquared = mean(rsquared, na.rm = TRUE),  # Average rsquared
+    sd_mumax = sd(mumax, na.rm = TRUE),      # Standard deviation of mumax
+    sd_rsquared = sd(rsquared, na.rm = TRUE), # Standard deviation of rsquared
+    .groups = "drop"                         # Ungroup after summarising
+  )
+
+# View the results
+print(MuMax_Averaged)
+
+# Save to CSV (optional)
+write.csv(MuMax_Averaged, "MuMax_Averaged_Results.csv", row.names = FALSE)
+
+```
+
+
 
 
 ```{r}
+# View the results
+print(SplineRates_results)
+View(SplineRates_results
+     )
+```
+
+
+
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(purrr)
+library(growthrates)
+library(lattice)
+library(deSolve)
+library(tidyr)
+
+
+# Fit splines and extract growth parameters
+SplineRates_nest <- Merged_ATData |>  # Replace ODDataLong with your actual dataset
+  nest(data = -c(nm, Well)) |>    # Group by 'nm' and 'Well', nest data
+  mutate(
+    # Fit spline to each group's data
+    SplineFit = purrr::map(data, ~growthrates::fit_spline(.$Time_numeric, .$nm)),
+
+    # Extract maximum growth rate (mumax)
+    mumax = purrr::map_dbl(SplineFit, ~pluck(., "par", "mumax")),
+
+    # Extract R-squared value (fit quality)
+    rsquared = purrr::map_dbl(SplineFit, ~pluck(., "rsquared"))
+  )
+
+# View the resulting tibble
+SplineRates_nest
 
 ```
 
