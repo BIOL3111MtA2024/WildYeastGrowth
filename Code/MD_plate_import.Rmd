@@ -294,6 +294,18 @@ write.csv(SplineRates_results, "SplineRates_results.csv", row.names = FALSE)
 
 ```
 #NEED to left join this with metadata so i can find average mumax and r squared
+
+```{r}
+library(dplyr)
+
+# Merge ODData with ATMetaData
+Merged_ATMetaData_MuMax <- SplineRates_results %>%
+  left_join(ATMetaData, by = "Well")
+View(Merged_ATMetaData_MuMax)
+```
+
+
+
 ```{r}
 # Group by Sample_ID, Ethanol_Percent, and Time_numeric to average mumax and rsquared
 MuMax_Averaged <- SplineRates_nest |> 
