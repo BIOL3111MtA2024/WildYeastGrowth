@@ -138,6 +138,11 @@ View(ODDataLong)
 ```
 
 ```{r}
+View(ATMetaData)
+```
+
+
+```{r}
 library(dplyr)
 
 # Merge ODData with ATMetaData
@@ -151,7 +156,7 @@ library(lubridate)
 
 # Convert Time to measurement #
 Merged_ATData <- Merged_ATData %>%
-  mutate(Time_numeric = as.numeric(hms(Time)))  
+  mutate(Time_numeric = as.numeric(hms(Time))/3600)  
 ```
 
 ```{r}
@@ -194,6 +199,8 @@ str(Merged_ATData)
 head(Merged_ATData) 
 ```
 ```{r}
+library(dplyr)
+library(ggplot2)
 ggplot(Merged_ATData_720, aes(x = Time_numeric, y = OD, color = as.factor(Ethanol_Percent), group = Well)) +
   geom_line() +
   geom_point() +
@@ -214,20 +221,30 @@ ggplot(Merged_ATData_720, aes(x = Time_numeric, y = OD, color = as.factor(Ethano
 ggplot(Merged_ATData_680, aes(x = Time_numeric, y = OD, color = as.factor(Ethanol_Percent), group = Well)) +
   geom_line() +
   geom_point() +
-  facet_wrap(~ Sample_ID) +  
+  facet_wrap(~ Sample_ID) +
   labs(
     title = "Growth Curves for Each Sample (OD at 680 nm)",
-    x = "Time (hours)", 
+    x = "Time (hours)",
     y = "Optical Density (OD680)",
     color = "Ethanol (%)"
   ) +
   theme_minimal() +
   theme(
     text = element_text(size = 12),
-    legend.position = "bottom"  
+    legend.position = "bottom"
+  ) +
+  scale_x_continuous(
+    breaks = Merged_ATData_680$Time_numeric[Merged_ATData_680$Time_numeric %% 0.25 == 0] %>% unique() %>% sort()
   )
 ```
 
+
+
+```{r}
+
+```
+
+```
 
 
 
