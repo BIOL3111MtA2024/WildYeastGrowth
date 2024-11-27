@@ -280,11 +280,55 @@ ggplot(SpecificGravityMetaData, aes(x = Time, y = Specific_Gravity, color = Samp
     color = "Sample ID"
   ) +
   theme_minimal()  # Use a clean theme
+```
+following code is for the rate of fermentation versus time for each sample type-- this gives the rate of fermentation of each sample type.
 
+```{r}
+# Calculating the rate of change for specific gravity over time of each sample during the brew
+SpecificGravityMetaData <- SpecificGravityMetaData %>%
+  group_by(Sample_ID) %>%
+  mutate(SG_Rate = c(NA, diff(Specific_Gravity) / diff(Time)))
+
+# Ploting fermentation rate for each Sample_ID containing yeast in separate graphs
+library(ggplot2)
+
+ggplot(SpecificGravityMetaData, aes(x = Time, y = SG_Rate, color = Sample_ID)) +
+  geom_line(size = 1) +  # Line for each yeast strain
+  geom_point(size = 2) +  # Points for each measurement
+  labs(
+    title = "Fermentation Rate Over Time by Yeast Strain",
+    x = "Time (hours)",
+    y = "SG Rate (SG/hour)",
+    color = "Yeast Strain"
+  ) +
+  facet_wrap(~ Sample_ID, scales = "free_y") +  # this part separates the plate for each sample ID
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+showing the final alcohol percents for each sample id
+```{r}
+# Step 1: Calculate Initial SG (at time = 0)
+initial_sg_values <- SpecificGravityMetaData %>%
+  filter(Time == 0) %>%
+  select(Sample_ID, Time, Specific_Gravity)
+
+# Step 2: Use the minimum SG as Final SG for each sample (if no SG ≤ 1.12)
+final_sg_values <- SpecificGravityMetaData %>%
+  group_by(Sample_ID) %>%
+  summarize(Final_SG = min(Specific_Gravity, na.rm = TRUE), .groups = "drop")
+
+# Step 3: Merge initial SG and final SG
+combined_sg_values <- merge(initial_sg_values, final_sg_values, by = "Sample_ID")
+
+# Step 4: Calculate ABV
+combined_sg_values$ABV <- (combined_sg_values$Specific_Gravity - combined_sg_values$Final_SG) * 131.25
+
+# View the final result with ABV calculations
+print(combined_sg_values)
 
 ```
 
-please work
+
 
 
 
