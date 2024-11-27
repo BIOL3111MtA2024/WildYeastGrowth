@@ -262,6 +262,30 @@ ggplot(VitalityFermentationMetaData, aes(x = as.factor(Sample_ID), y = Viability
   ) +
   scale_fill_manual(values = c("orange", "orange", "orange", "orange", "orange", "orange"))  # Customize bar colours to orange like beer 
 ```
+Specific gravity analysis data collected from the brew
+```{r}
+# Ensure your dataset is properly formatted
+SpecificGravityMetaData$Sample_ID <- as.factor(SpecificGravityMetaData$Sample_ID)
+SpecificGravityMetaData$Time <- as.numeric(SpecificGravityMetaData$Time)
+
+# Create the line plot
+library(ggplot2)
+ggplot(SpecificGravityMetaData, aes(x = Time, y = Specific_Gravity, color = Sample_ID, group = Sample_ID)) +
+  geom_line(size = 1) +  # Add lines for each yeast strain
+  geom_point(size = 2) +  # Add points for each data measurement
+  labs(
+    title = "Specific Gravity Over Time by Yeast Strain",
+    x = "Time (hours)",
+    y = "Specific Gravity",
+    color = "Sample ID"
+  ) +
+  theme_minimal()  # Use a clean theme
+
+
+```
+
+please work
+
 
 
 \newpage
