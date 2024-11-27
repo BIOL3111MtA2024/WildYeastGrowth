@@ -313,121 +313,373 @@ Merged_ATMetaData_MuMax_clean <- na.omit(Merged_ATMetaData_MuMax)
 
 # Check the result
 head(Merged_ATMetaData_MuMax_clean)
+
+View(Merged_ATMetaData_MuMax_clean)
+
 ```
 
 ```{r}
-# Load necessary library
-library(ggplot2)
+plot_sample_dual_nm <- function(data, sample_id) {
+  # Filter the dataset for the given Sample_ID and the desired nm values
+  sample_data <- data %>%
+    filter(Sample_ID == sample_id, nm %in% c(680, 720))
+  
+  # Check if the filtered data is valid
+  if (nrow(sample_data) == 0) {
+    stop("No data available for the given Sample_ID and nm values.")
+  }
+  
+  # Generate the plot
+  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
+    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
+    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
+    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
+    scale_x_continuous(
+      limits = c(0, 13),
+      breaks = seq(0, 13, by = 1),
+      expand = c(0, 0)
+    ) +
+    scale_y_continuous(
+      limits = c(0, 0.4),
+      breaks = seq(0, , by = 0.1),
+      expand = c(0, 0)) +
+    labs(
+      x = "Ethanol Concentration (%, v/v)", 
+      y = expression(mu[max]),  # Subscript "max"
+      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
+    ) +
+    theme_minimal() +
+    theme(
+      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
+      panel.grid.minor = element_blank(),                               # Remove minor grid lines
+      axis.title = element_text(size = 16),                             # Larger axis titles
+      axis.text = element_text(size = 14),                              # Larger axis text
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
+      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
+      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+    ) +
+    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    guides(fill = guide_legend(title = "Wavelength (nm)"), 
+           color = guide_legend(title = "Wavelength (nm)"))
+  
+  return(plot)
+}
 
-# Plot with larger dimensions and improved readability
-ggplot(data_680, aes(x = Ethanol_Percent, y = mumax, color = as.factor(Replicate))) +
-  geom_point(size = 3) +                            # Larger points
-  geom_line(size = 1, aes(group = Replicate)) +     # Separate line for each replicate
-  facet_wrap(~ Sample_ID, scales = "free", ncol = 2) + # Two columns for better spacing
-  labs(
-    x = "Ethanol Concentration (%v/v)", 
-    y = "mumax",
-    color = "Replicate",                            # Legend title for replicates
-    title = "mumax vs Ethanol Concentration at 680 nm by Replicate"
-  ) +
-  theme_minimal() +
-  theme(
-    panel.grid = element_blank(),                   # Remove grid lines
-    axis.title = element_text(size = 18),           # Larger axis titles
-    axis.text = element_text(size = 14),            # Larger axis text
-    strip.text = element_text(size = 16, face = "bold"), # Larger facet labels
-    legend.text = element_text(size = 14),          # Larger legend text
-    legend.title = element_text(size = 16),         # Larger legend title
-    panel.border = element_rect(color = "black", fill = NA), # Add border around panels
-    plot.title = element_text(size = 20, face = "bold", hjust = 0.5), # Bold, centered title
-    strip.background = element_rect(fill = "lightgray", color = "black") # Gray background for facet labels
-  )
+# Example Usage
+sample_id <- 18
+plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
+print(plot)
 
-# Save the plot with larger dimensions
-ggsave("mumax_680nm_triplicate_large_plot.png", width = 16, height = 10, dpi = 300)
-
-
-
-
+# Save the plot
+ggsave(
+  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
+  plot = plot,
+  width = 8, height = 10, dpi = 300
+)
 ```
+```{r}
+plot_sample_dual_nm <- function(data, sample_id) {
+  # Filter the dataset for the given Sample_ID and the desired nm values
+  sample_data <- data %>%
+    filter(Sample_ID == sample_id, nm %in% c(680, 720))
+  
+  # Check if the filtered data is valid
+  if (nrow(sample_data) == 0) {
+    stop("No data available for the given Sample_ID and nm values.")
+  }
+  
+  # Generate the plot
+  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
+    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
+    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
+    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
+    scale_x_continuous(
+      limits = c(0, 13),
+      breaks = seq(0, 13, by = 1),
+      expand = c(0, 0)
+    ) +
+    scale_y_continuous(
+      limits = c(0, 0.4),
+      breaks = seq(0, , by = 0.1),
+      expand = c(0, 0)) +
+    labs(
+      x = "Ethanol Concentration (%, v/v)", 
+      y = expression(mu[max]),  # Subscript "max"
+      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
+    ) +
+    theme_minimal() +
+    theme(
+      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
+      panel.grid.minor = element_blank(),                               # Remove minor grid lines
+      axis.title = element_text(size = 16),                             # Larger axis titles
+      axis.text = element_text(size = 14),                              # Larger axis text
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
+      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
+      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+    ) +
+    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    guides(fill = guide_legend(title = "Wavelength (nm)"), 
+           color = guide_legend(title = "Wavelength (nm)"))
+  
+  return(plot)
+}
 
+# Example Usage
+sample_id <- 19
+plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
+print(plot)
+
+# Save the plot
+ggsave(
+  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
+  plot = plot,
+  width = 8, height = 10, dpi = 300
+)
+```
+```{r}
+plot_sample_dual_nm <- function(data, sample_id) {
+  # Filter the dataset for the given Sample_ID and the desired nm values
+  sample_data <- data %>%
+    filter(Sample_ID == sample_id, nm %in% c(680, 720))
+  
+  # Check if the filtered data is valid
+  if (nrow(sample_data) == 0) {
+    stop("No data available for the given Sample_ID and nm values.")
+  }
+  
+  # Generate the plot
+  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
+    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
+    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
+    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
+    scale_x_continuous(
+      limits = c(0, 13),
+      breaks = seq(0, 13, by = 1),
+      expand = c(0, 0)
+    ) +
+    scale_y_continuous(
+      limits = c(0, 0.8),
+      breaks = seq(0, , by = 0.2),
+      expand = c(0, 0)) +
+    labs(
+      x = "Ethanol Concentration (%, v/v)", 
+      y = expression(mu[max]),  # Subscript "max"
+      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
+    ) +
+    theme_minimal() +
+    theme(
+      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
+      panel.grid.minor = element_blank(),                               # Remove minor grid lines
+      axis.title = element_text(size = 16),                             # Larger axis titles
+      axis.text = element_text(size = 14),                              # Larger axis text
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
+      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
+      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+    ) +
+    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    guides(fill = guide_legend(title = "Wavelength (nm)"), 
+           color = guide_legend(title = "Wavelength (nm)"))
+  
+  return(plot)
+}
+
+# Example Usage
+sample_id <- 41
+plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
+print(plot)
+
+# Save the plot
+ggsave(
+  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
+  plot = plot,
+  width = 8, height = 10, dpi = 300
+)
+```
+```{r}
+plot_sample_dual_nm <- function(data, sample_id) {
+  # Filter the dataset for the given Sample_ID and the desired nm values
+  sample_data <- data %>%
+    filter(Sample_ID == sample_id, nm %in% c(680, 720))
+  
+  # Check if the filtered data is valid
+  if (nrow(sample_data) == 0) {
+    stop("No data available for the given Sample_ID and nm values.")
+  }
+  
+  # Generate the plot
+  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
+    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
+    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
+    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
+    scale_x_continuous(
+      limits = c(0, 13),
+      breaks = seq(0, 13, by = 1),
+      expand = c(0, 0)
+    ) +
+    scale_y_continuous(
+      limits = c(0, 0.8),
+      breaks = seq(0, , by = 0.2),
+      expand = c(0, 0)) +
+    labs(
+      x = "Ethanol Concentration (%, v/v)", 
+      y = expression(mu[max]),  # Subscript "max"
+      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
+    ) +
+    theme_minimal() +
+    theme(
+      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
+      panel.grid.minor = element_blank(),                               # Remove minor grid lines
+      axis.title = element_text(size = 16),                             # Larger axis titles
+      axis.text = element_text(size = 14),                              # Larger axis text
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
+      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
+      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+    ) +
+    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    guides(fill = guide_legend(title = "Wavelength (nm)"), 
+           color = guide_legend(title = "Wavelength (nm)"))
+  
+  return(plot)
+}
+
+# Example Usage
+sample_id <- 43
+plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
+print(plot)
+
+# Save the plot
+ggsave(
+  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
+  plot = plot,
+  width = 8, height = 10, dpi = 300
+)
+```
+```{r}
+plot_sample_dual_nm <- function(data, sample_id) {
+  # Filter the dataset for the given Sample_ID and the desired nm values
+  sample_data <- data %>%
+    filter(Sample_ID == sample_id, nm %in% c(680, 720))
+  
+  # Check if the filtered data is valid
+  if (nrow(sample_data) == 0) {
+    stop("No data available for the given Sample_ID and nm values.")
+  }
+  
+  # Generate the plot
+  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
+    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
+    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
+    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
+    scale_x_continuous(
+      limits = c(0, 13),
+      breaks = seq(0, 13, by = 1),
+      expand = c(0, 0)
+    ) +
+    scale_y_continuous(
+      limits = c(-0.1, 0.1),
+      breaks = seq(-0.1, 0.1, by = 0.05),
+      expand = c(0, 0)) +
+    labs(
+      x = "Ethanol Concentration (%, v/v)", 
+      y = expression(mu[max]),  # Subscript "max"
+      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
+    ) +
+    theme_minimal() +
+    theme(
+      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
+      panel.grid.minor = element_blank(),                               # Remove minor grid lines
+      axis.title = element_text(size = 16),                             # Larger axis titles
+      axis.text = element_text(size = 14),                              # Larger axis text
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
+      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
+      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+    ) +
+    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    guides(fill = guide_legend(title = "Wavelength (nm)"), 
+           color = guide_legend(title = "Wavelength (nm)"))
+  
+  return(plot)
+}
+
+# Example Usage
+sample_id <- 7
+plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
+print(plot)
+
+# Save the plot
+ggsave(
+  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
+  plot = plot,
+  width = 8, height = 10, dpi = 300
+)
+```
 
 ```{r}
-# Group by Sample_ID, Ethanol_Percent, and Time_numeric to average mumax and rsquared
-MuMax_Averaged <- SplineRates_nest |> 
-  group_by(Sample_ID, Ethanol_Percent, Time_numeric) |> 
-  summarise(
-    avg_mumax = mean(mumax, na.rm = TRUE),    # Average mumax
-    avg_rsquared = mean(rsquared, na.rm = TRUE),  # Average rsquared
-    sd_mumax = sd(mumax, na.rm = TRUE),      # Standard deviation of mumax
-    sd_rsquared = sd(rsquared, na.rm = TRUE), # Standard deviation of rsquared
-    .groups = "drop"                         # Ungroup after summarising
-  )
+plot_sample_dual_nm <- function(data, sample_id) {
+  # Filter the dataset for the given Sample_ID and the desired nm values
+  sample_data <- data %>%
+    filter(Sample_ID == sample_id, nm %in% c(680, 720))
+  
+  # Check if the filtered data is valid
+  if (nrow(sample_data) == 0) {
+    stop("No data available for the given Sample_ID and nm values.")
+  }
+  
+  # Generate the plot
+  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
+    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
+    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
+    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
+    scale_x_continuous(
+      limits = c(0, 13),
+      breaks = seq(0, 13, by = 1),
+      expand = c(0, 0)
+    ) +
+    scale_y_continuous(
+      limits = c(-0.1, 0.1),
+      breaks = seq(-0.1, 0.1, by = 0.05),
+      expand = c(0, 0)) +
+    labs(
+      x = "Ethanol Concentration (%, v/v)", 
+      y = expression(mu[max]),  # Subscript "max"
+      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
+    ) +
+    theme_minimal() +
+    theme(
+      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
+      panel.grid.minor = element_blank(),                               # Remove minor grid lines
+      axis.title = element_text(size = 16),                             # Larger axis titles
+      axis.text = element_text(size = 14),                              # Larger axis text
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
+      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
+      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+    ) +
+    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
+    guides(fill = guide_legend(title = "Wavelength (nm)"), 
+           color = guide_legend(title = "Wavelength (nm)"))
+  
+  return(plot)
+}
 
-# View the results
-print(MuMax_Averaged)
+# Example Usage
+sample_id <- 36
+plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
+print(plot)
 
-# Save to CSV (optional)
-write.csv(MuMax_Averaged, "MuMax_Averaged_Results.csv", row.names = FALSE)
-
+# Save the plot
+ggsave(
+  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
+  plot = plot,
+  width = 8, height = 10, dpi = 300
+)
 ```
 
 
 
-
-```{r}
-# View the results
-print(SplineRates_results)
-View(SplineRates_results
-     )
-```
-
-
-
-
-```{r}
-# Load necessary libraries
-library(dplyr)
-library(purrr)
-library(growthrates)
-library(lattice)
-library(deSolve)
-library(tidyr)
-
-
-# Fit splines and extract growth parameters
-SplineRates_nest <- Merged_ATData |>  # Replace ODDataLong with your actual dataset
-  nest(data = -c(nm, Well)) |>    # Group by 'nm' and 'Well', nest data
-  mutate(
-    # Fit spline to each group's data
-    SplineFit = purrr::map(data, ~growthrates::fit_spline(.$Time_numeric, .$nm)),
-
-    # Extract maximum growth rate (mumax)
-    mumax = purrr::map_dbl(SplineFit, ~pluck(., "par", "mumax")),
-
-    # Extract R-squared value (fit quality)
-    rsquared = purrr::map_dbl(SplineFit, ~pluck(., "rsquared"))
-  )
-
-# View the resulting tibble
-SplineRates_nest
-
-```
-
-```
-
-
-
-```{r growthrates package spline fit}
-#SplineRates_nest <- ODDataLong |>
-  #nest(data = -c(nm , Well)) |>
- # mutate(SplineFit = purrr::map(data, ~growthrates::fit_spline(.$Time, .$OD))) |>
- # mutate(mumax = purrr::map(SplineFit, ~pluck(., "par", "mumax"))) |>
- # mutate(rsquared = purrr::map(SplineFit, ~pluck(., "rsquared"))) 
-
-```
-
-```{r export data}
-# write_csv(x = SplineRates_nest |> select(c(Media, Treatment, mumax, rsquared)), file = "MuMaxEstimates.csv")
-```
 
