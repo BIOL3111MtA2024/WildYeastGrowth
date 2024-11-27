@@ -238,14 +238,6 @@ MultiData <- MultiFiles %>%
   map_df(~fread_plus(Flnm = ., Skip = "key"))
 ```
 
-
-
-
-
-
-
-
-
 code beneath is making a bar graph of the the vitality of the yeast samples tested and it indicates the percent of surving yeast of total yeast samples.
 
 ```{r}
@@ -270,7 +262,7 @@ ggplot(VitalityFermentationMetaData, aes(x = as.factor(Sample_ID), y = Viability
   ) +
   scale_fill_manual(values = c("orange", "orange", "orange", "orange", "orange", "orange"))  # Customize bar colours to orange like beer 
 ```
-test 
+
 
 \newpage
 
