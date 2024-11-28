@@ -600,8 +600,8 @@ plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
 
 ```
-
-```{r}
+# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 18.
+```{r ANOVA Table Sample 18}
 # Define a function for ANOVA for a specific Sample_ID
 perform_anova_for_sample <- function(data, sample_id) {
   # Subset data dynamically within the function
@@ -621,7 +621,8 @@ anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_i
 print(anova_result)
 
 ```
-```{r}
+# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 19.
+```{r ANOVA Table Sample 19}
 # Define a function for ANOVA for a specific Sample_ID
 perform_anova_for_sample <- function(data, sample_id) {
   # Subset data dynamically within the function
@@ -641,8 +642,8 @@ anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_i
 # Print the ANOVA result for the specified Sample_ID
 print(anova_result)
 ```
-
-```{r}
+# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 41.
+```{r ANOVA Table Sample 41}
 # Define a function for ANOVA for a specific Sample_ID
 perform_anova_for_sample <- function(data, sample_id) {
   # Subset data dynamically within the function
@@ -662,8 +663,8 @@ anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_i
 # Print the ANOVA result for the specified Sample_ID
 print(anova_result)
 ```
-
-```{r}
+# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 43.
+```{r ANOVA Table Sample 43}
 # Define a function for ANOVA for a specific Sample_ID
 perform_anova_for_sample <- function(data, sample_id) {
   # Subset data dynamically within the function
@@ -683,8 +684,8 @@ anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_i
 # Print the ANOVA result for the specified Sample_ID
 print(anova_result)
 ```
-
-```{r}
+# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 7.
+```{r ANOVA Table Sample 7}
 # Define a function for ANOVA for a specific Sample_ID
 perform_anova_for_sample <- function(data, sample_id) {
   # Subset data dynamically within the function
@@ -704,8 +705,8 @@ anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_i
 # Print the ANOVA result for the specified Sample_ID
 print(anova_result)
 ```
-
-```{r}
+# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 36.
+```{r ANOVA Table Sample 36}
 # Define a function for ANOVA for a specific Sample_ID
 perform_anova_for_sample <- function(data, sample_id) {
   # Subset data dynamically within the function
