@@ -238,7 +238,6 @@ MultiData <- MultiFiles %>%
   map_df(~fread_plus(Flnm = ., Skip = "key"))
 ```
 
-code beneath is making a bar graph of the the vitality of the yeast samples tested and it indicates the percent of surving yeast of total yeast samples.
 
 ```{r}
 install.packages("ggplot2")
@@ -248,89 +247,105 @@ install.packages("ggplot2")
 library(ggplot2)
 ```
 
-```{r}
+```{r percent of living yeast compared to total yeast from each sample ID containing yeast graphing on bar graph}
 ggplot(VitalityFermentationMetaData, aes(x = as.factor(Sample_ID), y = Viability_Percent, fill = as.factor(Sample_ID))) +
-  geom_bar(stat = "identity", alpha = 0.7) +  # bars Sample_ID
-  geom_text(aes(label = round(Viability_Percent, 1)), vjust = -0.5, hjust = 0.5, size = 4, color = "black") +  # made the data lables centred that show the percent of living cells
+  geom_bar(stat = "identity", alpha = 0.7) +  # Bars for Sample_ID
+  geom_text(aes(label = round(Viability_Percent, 1)), 
+            vjust = -0.5, hjust = 0.5, size = 4, color = "black") +  # Add centered data labels
   theme_minimal() +
-  labs(title = "Viability Percent by Sample ID",
-       x = "Sample ID",
-       y = "Viability Percent") +
-  theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5),  # Center x-axis labels
-    legend.position = "none"  # Remove legend do not need
-  ) +
-  scale_fill_manual(values = c("orange", "orange", "orange", "orange", "orange", "orange"))  # Customize bar colours to orange like beer 
+  labs(title = "Viability Percent by Sample ID", x = "Sample ID", y = "Viability Percent") + theme( axis.text.x = element_text(angle = 0, hjust = 0.5),  # Center x-axis labels
+legend.position = "none") + scale_fill_manual (values = c( "7" = "orange", "18" = "blue", "19" = "green", "36" = "red", "41" = "purple", "43" = "black"))
 ```
-Specific gravity analysis data collected from the brew
-```{r}
-# Ensure your dataset is properly formatted
-SpecificGravityMetaData$Sample_ID <- as.factor(SpecificGravityMetaData$Sample_ID)
-SpecificGravityMetaData$Time <- as.numeric(SpecificGravityMetaData$Time)
 
-# Create the line plot
-library(ggplot2)
-ggplot(SpecificGravityMetaData, aes(x = Time, y = Specific_Gravity, color = Sample_ID, group = Sample_ID)) +
-  geom_line(size = 1) +  # Add lines for each yeast strain
-  geom_point(size = 2) +  # Add points for each data measurement
-  labs(
-    title = "Specific Gravity Over Time by Yeast Strain",
-    x = "Time (hours)",
-    y = "Specific Gravity",
-    color = "Sample ID"
-  ) +
-  theme_minimal()  # Use a clean theme
-```
-following code is for the rate of fermentation versus time for each sample type-- this gives the rate of fermentation of each sample type.
-
-```{r}
-# Calculating the rate of change for specific gravity over time of each sample during the brew
-SpecificGravityMetaData <- SpecificGravityMetaData %>%
-  group_by(Sample_ID) %>%
-  mutate(SG_Rate = c(NA, diff(Specific_Gravity) / diff(Time)))
-
-# Ploting fermentation rate for each Sample_ID containing yeast in separate graphs
-library(ggplot2)
-
-ggplot(SpecificGravityMetaData, aes(x = Time, y = SG_Rate, color = Sample_ID)) +
-  geom_line(size = 1) +  # Line for each yeast strain
-  geom_point(size = 2) +  # Points for each measurement
-  labs(
-    title = "Fermentation Rate Over Time by Yeast Strain",
-    x = "Time (hours)",
-    y = "SG Rate (SG/hour)",
-    color = "Yeast Strain"
-  ) +
-  facet_wrap(~ Sample_ID, scales = "free_y") +  # this part separates the plate for each sample ID
-  theme_minimal() +
-  theme(legend.position = "none")
-```
-showing the final alcohol percents for each sample id
-```{r}
-# Step 1: Calculate Initial SG (at time = 0)
+```{r final acohol percent of each sample }
+library(dplyr)
+# Extract SG at Time = 0
 initial_sg_values <- SpecificGravityMetaData %>%
   filter(Time == 0) %>%
-  select(Sample_ID, Time, Specific_Gravity)
+  select(Sample_ID, Specific_Gravity) %>%
+  rename(Initial_SG = Specific_Gravity)
 
-# Step 2: Use the minimum SG as Final SG for each sample (if no SG ≤ 1.12)
+# Extract Final SG the minimum SG for each Sample_ID
 final_sg_values <- SpecificGravityMetaData %>%
   group_by(Sample_ID) %>%
   summarize(Final_SG = min(Specific_Gravity, na.rm = TRUE), .groups = "drop")
 
-# Step 3: Merge initial SG and final SG
+# Merge Initial SG and Final SG
 combined_sg_values <- merge(initial_sg_values, final_sg_values, by = "Sample_ID")
 
-# Step 4: Calculate ABV
-combined_sg_values$ABV <- (combined_sg_values$Specific_Gravity - combined_sg_values$Final_SG) * 131.25
+# Calculate ABV (Alcohol By Volume) getting the percent of alcohol in the final beer
+combined_sg_values <- combined_sg_values %>%
+  mutate(ABV = (Initial_SG - Final_SG) * 131.25)
 
-# View the final result with ABV calculations
+# making a table of final results
 print(combined_sg_values)
-
 ```
 
+```{r the SG of each sample ID versus time collected throught the brewing proccess}
+# making sure the data is formatted good
+SpecificGravityMetaData$Sample_ID <- as.factor(SpecificGravityMetaData$Sample_ID)
+SpecificGravityMetaData$Time <- as.numeric(SpecificGravityMetaData$Time)
 
+# making the graph
+library(ggplot2)
+ggplot(SpecificGravityMetaData, aes(x = Time, y = Specific_Gravity, color = Sample_ID, group = Sample_ID)) + geom_line(size = 1) + geom_point(size = 2) + labs( title = "Specific Gravity Over Time by Yeast Strain", x = "Time (hours)", y = "Specific Gravity", color = "Sample ID") +
 
+theme_minimal() + scale_color_manual(values = c("7" = "orange", "18" = "blue", "19" = "green", "36" = "red", "41" = "purple", "43" = "black"))
+```
 
+```{r the following code is for the rate of fermentation versus time for each sample type-- this shows if the rate of alcohol production changes as the brewing time increases}
+library(dplyr)
+library(ggplot2)
+
+# finding the rate of change for Specific Gravity vs. Time
+SpecificGravityMetaData <- SpecificGravityMetaData %>%
+  group_by(Sample_ID) %>%
+  mutate(SG_Rate = c(NA, diff(Specific_Gravity) / diff(Time)))
+
+# ploting
+ggplot(SpecificGravityMetaData, aes(x = Time, y = SG_Rate, color = as.factor(Sample_ID))) + geom_line(size = 1) + geom_point(size = 2) + labs(title = "Fermentation Rate versus Time of each Sample ID", x = "Time (hours)", y = "SG Rate (SG/hour)", color = "Sample ID") + facet_wrap(~ Sample_ID, scales = "free_y") +  
+  theme_minimal() +
+  theme(legend.position = "none") +  
+  scale_color_manual(values = c( "7" = "orange", "18" = "blue", "19" = "green", "36" = "red", "41" = "purple", "43" = "black"))
+```
+
+```{r making a graph to show how long each brew took to reach the final SG }
+library(dplyr)
+library(ggplot2)
+
+# calculating the Final SG and the time taken to reach it for each Sample_ID
+completion_times <- SpecificGravityMetaData %>%
+  group_by(Sample_ID) %>%
+  filter(Specific_Gravity == min(Specific_Gravity, na.rm = TRUE)) %>%
+  summarize(Completion_Time = min(Time), .groups = "drop")  # telling it to use earliest collection time if multiple exist
+
+# making the graph
+ggplot(completion_times, aes(x = factor(Sample_ID), y = Completion_Time, fill = as.factor(Sample_ID))) +
+  geom_bar(stat = "identity") + labs(title = "Time Taken to Reach the Final Specific Gravity", x = "Sample ID", y = "Completion Time (hours)") +
+  theme_minimal() + scale_fill_manual(values = c("7" = "orange", "18" = "blue", "19" = "green", "36" = "red", "41" = "purple", "43" = "black"))
+```
+
+```{r finding out the atenuation of the sample this will identify the efficency of the yeast strain by comparing the sugar content in the initial wart to the amount of sugars left over giving a percent of sugars consumed and converted to alcohol or CO2}
+library(dplyr)
+library(ggplot2)
+
+# Attenuation for Each Sample
+attenuation_data <- SpecificGravityMetaData %>%
+  group_by(Sample_ID) %>%
+  summarize(
+    Initial_SG = max(Specific_Gravity, na.rm = TRUE),  # initial SG is the max
+    Final_SG = min(Specific_Gravity, na.rm = TRUE),    # Final SG is the min
+    .groups = "drop"
+  ) %>%
+  mutate(
+    Apparent_Attenuation = ((Initial_SG - Final_SG) / (Initial_SG - 1)) * 100
+  )
+
+# graphing
+ggplot(attenuation_data, aes(x = factor(Sample_ID), y = Apparent_Attenuation, fill = as.factor(Sample_ID))) + geom_bar(stat = "identity") + labs( title = "Apparent Attenuation by Sample ID", x = "Sample ID", y = "Apparent Attenuation (%)") +
+  theme_minimal() +
+  scale_fill_manual( values = c( "7" = "orange", "18" = "blue", "19" = "green", "36" = "red", "41" = "purple", "43" = "black"))
+```
 
 \newpage
 
