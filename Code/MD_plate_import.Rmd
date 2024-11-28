@@ -39,11 +39,6 @@ file_id <- ".csv"
 
 ```
 
-
-```{r read metadata}
-# left join
-```
-
 # List Data file(s)
 ```{r datafiles}
 DataFiles <- list.files(path = DataPath, pattern = file_id, full.names = TRUE)
@@ -606,6 +601,129 @@ print(plot)
 
 ```
 
+```{r}
+# Define a function for ANOVA for a specific Sample_ID
+perform_anova_for_sample <- function(data, sample_id) {
+  # Subset data dynamically within the function
+  sample_data <- data %>% filter(Sample_ID == sample_id)
+  
+  # Perform ANOVA
+  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
+  
+  # Return the ANOVA summary
+  return(summary(anova_result))
+}
 
+sample_id <- 18
+anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
+
+# Print the ANOVA result for the specified Sample_ID
+print(anova_result)
+
+```
+```{r}
+# Define a function for ANOVA for a specific Sample_ID
+perform_anova_for_sample <- function(data, sample_id) {
+  # Subset data dynamically within the function
+  sample_data <- data %>% filter(Sample_ID == sample_id)
+  
+  # Perform ANOVA
+  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
+  
+  # Return the ANOVA summary
+  return(summary(anova_result))
+}
+
+# Example Usage
+sample_id <- 19
+anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
+
+# Print the ANOVA result for the specified Sample_ID
+print(anova_result)
+```
+
+```{r}
+# Define a function for ANOVA for a specific Sample_ID
+perform_anova_for_sample <- function(data, sample_id) {
+  # Subset data dynamically within the function
+  sample_data <- data %>% filter(Sample_ID == sample_id)
+  
+  # Perform ANOVA
+  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
+  
+  # Return the ANOVA summary
+  return(summary(anova_result))
+}
+
+# Example Usage
+sample_id <- 41
+anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
+
+# Print the ANOVA result for the specified Sample_ID
+print(anova_result)
+```
+
+```{r}
+# Define a function for ANOVA for a specific Sample_ID
+perform_anova_for_sample <- function(data, sample_id) {
+  # Subset data dynamically within the function
+  sample_data <- data %>% filter(Sample_ID == sample_id)
+  
+  # Perform ANOVA
+  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
+  
+  # Return the ANOVA summary
+  return(summary(anova_result))
+}
+
+# Example Usage
+sample_id <- 43
+anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
+
+# Print the ANOVA result for the specified Sample_ID
+print(anova_result)
+```
+
+```{r}
+# Define a function for ANOVA for a specific Sample_ID
+perform_anova_for_sample <- function(data, sample_id) {
+  # Subset data dynamically within the function
+  sample_data <- data %>% filter(Sample_ID == sample_id)
+  
+  # Perform ANOVA
+  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
+  
+  # Return the ANOVA summary
+  return(summary(anova_result))
+}
+
+# Example Usage
+sample_id <- 7
+anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
+
+# Print the ANOVA result for the specified Sample_ID
+print(anova_result)
+```
+
+```{r}
+# Define a function for ANOVA for a specific Sample_ID
+perform_anova_for_sample <- function(data, sample_id) {
+  # Subset data dynamically within the function
+  sample_data <- data %>% filter(Sample_ID == sample_id)
+  
+  # Perform ANOVA
+  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
+  
+  # Return the ANOVA summary
+  return(summary(anova_result))
+}
+
+# Example Usage
+sample_id <- 36
+anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
+
+# Print the ANOVA result for the specified Sample_ID
+print(anova_result)
+```
 
 
