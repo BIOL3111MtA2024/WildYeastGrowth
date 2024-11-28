@@ -131,21 +131,20 @@ head(ODDataLong)
 ```
 
 
-
+# Data in long format (rds).
 ```{r save rds}
 saveRDS(ODDataLong, file = file.path("..", "Data", "ProcessedData", "ODDataLong.rds"))
 ```
-
+# Convert time from h:m:s format to numeric format (1,2,3,4,5,6,7,8 etc.)
 ```{r}
-View(ODDataLong)
+library(lubridate)
+library(dplyr)
+
+ODDataLong <- ODDataLong %>% 
+  mutate(Time_numeric = as.numeric(hms(Time)) / 3600)  # Converts to hours
 ```
-
-```{r}
-View(ATMetaData)
-```
-
-
-```{r}
+# Merge ODDataLong with Metadata before attempting data analyses.
+```{r Merge ODData with Metadata}
 library(dplyr)
 
 # Merge ODData with ATMetaData
@@ -153,20 +152,8 @@ Merged_ATData <- ODDataLong %>%
   left_join(ATMetaData, by = "Well")
 
 ```
-
-```{r}
-library(lubridate)
-
-# Convert Time to measurement #
-Merged_ATData <- Merged_ATData %>%
-  mutate(Time_numeric = as.numeric(hms(Time))/3600)  
-```
-
-```{r}
-View(Merged_ATData)
-```
-
-```{r}
+# Filter out wells that had no media/innoculant to avoid problems in analysis.
+```{r Filter NA Results}
 library(dplyr)
 
 # Exclude wells G10, G11, G12, H10, H11, H12
@@ -176,9 +163,8 @@ Merged_ATData <- Merged_ATData %>%
 # Verify
 table(Merged_ATData$Well) 
 ```
-
-
-```{r}
+# Filter merged data by wavelength, inorder to make  growth curves for OD720 and OD680.
+```{r Filter Data by nm}
 # Filter data for OD 680 nm
 Merged_ATData_680 <- Merged_ATData %>%
   filter(nm == 680)
@@ -187,21 +173,22 @@ Merged_ATData_680 <- Merged_ATData %>%
 Merged_ATData_720 <- Merged_ATData %>%
   filter(nm == 720)
 ```
-
-```{r}
+# Double check data is in time numeric form for analyses.
+```{r Convert to time numeric}
 library(dplyr)
 library(lubridate)
 
-Merged_ATData <- Merged_ATData %>%
+Merged_ATData <- Merged_ATData %>% 
   mutate(Time_numeric = as.numeric(hms(Time)) / 3600)  # Converts to hours
 ```
-
-```{r}
+# Verify structure prior to spline test for MuMax, problematic structure, will cause problems.
+```{r Verify Merged_ATData Structure}
 #Verify dataset structure
 str(Merged_ATData)  
 head(Merged_ATData) 
 ```
-```{r}
+# Growth Curves at OD720.
+```{r Growth Curves at OD720}
 library(dplyr)
 library(ggplot2)
 ggplot(Merged_ATData_720, aes(x = Time_numeric, y = OD, color = as.factor(Ethanol_Percent), group = Well)) +
@@ -220,7 +207,8 @@ ggplot(Merged_ATData_720, aes(x = Time_numeric, y = OD, color = as.factor(Ethano
     legend.position = "bottom"  
   )
 ```
-```{r}
+# Growth Curves at OD680.
+```{r Growth Curves at OD680}
 ggplot(Merged_ATData_680, aes(x = Time_numeric, y = OD, color = as.factor(Ethanol_Percent), group = Well)) +
   geom_line() +
   geom_point() +
@@ -240,27 +228,13 @@ ggplot(Merged_ATData_680, aes(x = Time_numeric, y = OD, color = as.factor(Ethano
     breaks = Merged_ATData_680$Time_numeric[Merged_ATData_680$Time_numeric %% 0.25 == 0] %>% unique() %>% sort()
   )
 ```
-
-```{r}
+# Cleaned data for splines test, to ensure no problems arise.
+```{r Clean data for splines test}
 Merged_ATData_clean <- Merged_ATData |> 
   filter(!is.na(Time_numeric), !is.na(nm), is.finite(Time_numeric), is.finite(nm))
 ```
-
-```{r}
-View(Merged_ATData_clean
-     )
-```
-
-```{r}
-# Count rows in each group
-Merged_ATData |> 
-  group_by(nm, Well) |> 
-  summarise(count = n()) |> 
-  arrange(count)
-
-```
-
-```{r}
+# Spline Fitting for Determining MuMax and R-squared for all Wells.
+```{r Run splines test for MuMax and R-squared}
 # Load necessary libraries
 library(dplyr)
 library(tidyr)
@@ -292,13 +266,12 @@ SplineRates_results <- SplineRates_nest |>
 # View the results
 print(SplineRates_results)
 
-# Save the results to a CSV file (optional)
+# Save the results to a CSV file
 write.csv(SplineRates_results, "SplineRates_results.csv", row.names = FALSE)
 
 ```
-#NEED to left join this with metadata so i can find average mumax and r squared
-
-```{r}
+# Merged splines results with ATMetaData for further analyses
+```{r Merge results with ATMetaData}
 library(dplyr)
 
 # Merge ODData with ATMetaData
@@ -306,8 +279,8 @@ Merged_ATMetaData_MuMax <- SplineRates_results %>%
   left_join(ATMetaData, by = "Well")
 View(Merged_ATMetaData_MuMax)
 ```
-
-```{r}
+# Cleaned the resulting merged data, "Merged_ATMetaData_MuMax", before plotting MuMax vs EtOH concentration.
+```{r Filter NA values}
 # Remove rows with any NA values
 Merged_ATMetaData_MuMax_clean <- na.omit(Merged_ATMetaData_MuMax)
 
@@ -317,10 +290,10 @@ head(Merged_ATMetaData_MuMax_clean)
 View(Merged_ATMetaData_MuMax_clean)
 
 ```
-
-```{r}
+# MuMax vs EtOH Conc for Sample 18 measured at 720 and 680 nm.
+```{r MuMax vs EtOH Conc for Sample 18}
 plot_sample_dual_nm <- function(data, sample_id) {
-  # Filter the dataset for the given Sample_ID and the desired nm values
+  # Filter the dataset for the given Sample_ID and nm values
   sample_data <- data %>%
     filter(Sample_ID == sample_id, nm %in% c(680, 720))
   
@@ -350,13 +323,13 @@ plot_sample_dual_nm <- function(data, sample_id) {
     ) +
     theme_minimal() +
     theme(
-      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
-      panel.grid.minor = element_blank(),                               # Remove minor grid lines
-      axis.title = element_text(size = 16),                             # Larger axis titles
-      axis.text = element_text(size = 14),                              # Larger axis text
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
-      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
-      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+      panel.grid.major = element_line(color = "gray90"),               
+      panel.grid.minor = element_blank(),                               
+      axis.title = element_text(size = 16),                             
+      axis.text = element_text(size = 14),                              
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
+      strip.text = element_text(size = 14, face = "bold"),             
+      panel.border = element_rect(color = "black", fill = NA)          
     ) +
     scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
     scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
@@ -370,15 +343,9 @@ plot_sample_dual_nm <- function(data, sample_id) {
 sample_id <- 18
 plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
-
-# Save the plot
-ggsave(
-  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
-  plot = plot,
-  width = 8, height = 10, dpi = 300
-)
 ```
-```{r}
+# MuMax vs EtOH Conc for Sample 19 measured at 720 and 680 nm.
+```{r MuMax vs EtOH Conc for Sample 19}
 plot_sample_dual_nm <- function(data, sample_id) {
   # Filter the dataset for the given Sample_ID and the desired nm values
   sample_data <- data %>%
@@ -410,13 +377,13 @@ plot_sample_dual_nm <- function(data, sample_id) {
     ) +
     theme_minimal() +
     theme(
-      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
-      panel.grid.minor = element_blank(),                               # Remove minor grid lines
-      axis.title = element_text(size = 16),                             # Larger axis titles
-      axis.text = element_text(size = 14),                              # Larger axis text
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
-      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
-      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+      panel.grid.major = element_line(color = "gray90"),             
+      panel.grid.minor = element_blank(),                            
+      axis.title = element_text(size = 16),                            
+      axis.text = element_text(size = 14),                              
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
+      strip.text = element_text(size = 14, face = "bold"),              
+      panel.border = element_rect(color = "black", fill = NA)          
     ) +
     scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
     scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
@@ -425,20 +392,12 @@ plot_sample_dual_nm <- function(data, sample_id) {
   
   return(plot)
 }
-
-# Example Usage
 sample_id <- 19
 plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
-
-# Save the plot
-ggsave(
-  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
-  plot = plot,
-  width = 8, height = 10, dpi = 300
-)
 ```
-```{r}
+# MuMax vs EtOH Conc for Sample 41 measured at 720 and 680 nm.
+```{r MuMax vs EtOH Conc for Sample 41}
 plot_sample_dual_nm <- function(data, sample_id) {
   # Filter the dataset for the given Sample_ID and the desired nm values
   sample_data <- data %>%
@@ -470,13 +429,13 @@ plot_sample_dual_nm <- function(data, sample_id) {
     ) +
     theme_minimal() +
     theme(
-      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
-      panel.grid.minor = element_blank(),                               # Remove minor grid lines
-      axis.title = element_text(size = 16),                             # Larger axis titles
-      axis.text = element_text(size = 14),                              # Larger axis text
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
-      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
-      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+      panel.grid.major = element_line(color = "gray90"),               
+      panel.grid.minor = element_blank(),                               
+      axis.title = element_text(size = 16),                          
+      axis.text = element_text(size = 14),                              
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
+      strip.text = element_text(size = 14, face = "bold"),              
+      panel.border = element_rect(color = "black", fill = NA)           
     ) +
     scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
     scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
@@ -485,20 +444,12 @@ plot_sample_dual_nm <- function(data, sample_id) {
   
   return(plot)
 }
-
-# Example Usage
 sample_id <- 41
 plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
-
-# Save the plot
-ggsave(
-  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
-  plot = plot,
-  width = 8, height = 10, dpi = 300
-)
 ```
-```{r}
+# MuMax vs EtOH Conc for Sample 43 measured at 720 and 680 nm.
+```{r MuMax vs EtOH Conc for Sample 43}
 plot_sample_dual_nm <- function(data, sample_id) {
   # Filter the dataset for the given Sample_ID and the desired nm values
   sample_data <- data %>%
@@ -530,13 +481,13 @@ plot_sample_dual_nm <- function(data, sample_id) {
     ) +
     theme_minimal() +
     theme(
-      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
-      panel.grid.minor = element_blank(),                               # Remove minor grid lines
-      axis.title = element_text(size = 16),                             # Larger axis titles
-      axis.text = element_text(size = 14),                              # Larger axis text
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
-      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
-      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+      panel.grid.major = element_line(color = "gray90"),              
+      panel.grid.minor = element_blank(),                               
+      axis.title = element_text(size = 16),                          
+      axis.text = element_text(size = 14),                           
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
+      strip.text = element_text(size = 14, face = "bold"),              
+      panel.border = element_rect(color = "black", fill = NA)          
     ) +
     scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
     scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
@@ -545,20 +496,12 @@ plot_sample_dual_nm <- function(data, sample_id) {
   
   return(plot)
 }
-
-# Example Usage
 sample_id <- 43
 plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
-
-# Save the plot
-ggsave(
-  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
-  plot = plot,
-  width = 8, height = 10, dpi = 300
-)
 ```
-```{r}
+# MuMax vs EtOH Conc for Sample 7 measured at 720 and 680 nm.
+```{r MuMax vs EtOH Conc for Sample 7}
 plot_sample_dual_nm <- function(data, sample_id) {
   # Filter the dataset for the given Sample_ID and the desired nm values
   sample_data <- data %>%
@@ -590,13 +533,13 @@ plot_sample_dual_nm <- function(data, sample_id) {
     ) +
     theme_minimal() +
     theme(
-      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
-      panel.grid.minor = element_blank(),                               # Remove minor grid lines
-      axis.title = element_text(size = 16),                             # Larger axis titles
-      axis.text = element_text(size = 14),                              # Larger axis text
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
-      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
-      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+      panel.grid.major = element_line(color = "gray90"),               
+      panel.grid.minor = element_blank(),                               
+      axis.title = element_text(size = 16),                             
+      axis.text = element_text(size = 14),                              
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
+      strip.text = element_text(size = 14, face = "bold"),              
+      panel.border = element_rect(color = "black", fill = NA)           
     ) +
     scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
     scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
@@ -605,23 +548,14 @@ plot_sample_dual_nm <- function(data, sample_id) {
   
   return(plot)
 }
-
-# Example Usage
 sample_id <- 7
 plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
-
-# Save the plot
-ggsave(
-  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
-  plot = plot,
-  width = 8, height = 10, dpi = 300
-)
 ```
-
-```{r}
+# MuMax vs EtOH Conc for Sample 36 measured at 720 and 680 nm.
+```{r MuMax vs EtOH Conc for Sample 36}
 plot_sample_dual_nm <- function(data, sample_id) {
-  # Filter the dataset for the given Sample_ID and the desired nm values
+  # Filter the dataset for the given Sample_ID and nm values
   sample_data <- data %>%
     filter(Sample_ID == sample_id, nm %in% c(680, 720))
   
@@ -651,13 +585,13 @@ plot_sample_dual_nm <- function(data, sample_id) {
     ) +
     theme_minimal() +
     theme(
-      panel.grid.major = element_line(color = "gray90"),                # Add light grid lines for reference
-      panel.grid.minor = element_blank(),                               # Remove minor grid lines
-      axis.title = element_text(size = 16),                             # Larger axis titles
-      axis.text = element_text(size = 14),                              # Larger axis text
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), # Bold and centered title
-      strip.text = element_text(size = 14, face = "bold"),              # Facet label styling
-      panel.border = element_rect(color = "black", fill = NA)           # Border around facets
+      panel.grid.major = element_line(color = "gray90"),            
+      panel.grid.minor = element_blank(),                               
+      axis.title = element_text(size = 16),                             
+      axis.text = element_text(size = 14),                              
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
+      strip.text = element_text(size = 14, face = "bold"),              
+      panel.border = element_rect(color = "black", fill = NA)           
     ) +
     scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
     scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
@@ -666,18 +600,10 @@ plot_sample_dual_nm <- function(data, sample_id) {
   
   return(plot)
 }
-
-# Example Usage
 sample_id <- 36
 plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
 
-# Save the plot
-ggsave(
-  filename = paste0("mumax_dual_nm_sample_", sample_id, ".png"),
-  plot = plot,
-  width = 8, height = 10, dpi = 300
-)
 ```
 
 
