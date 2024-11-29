@@ -68,6 +68,7 @@ A text file of functions is a preliminary step towards a package, to re-use func
 ```{r source CampbellLabRFunctions.txt}
 source("FundyPhytoFunctions.txt")
 ```
+
 ```{r show equations}
 #linear equations are in base R but a user defined equation may be convenient for use in parallel with other user defined equations
 linear_eqn
@@ -162,7 +163,7 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/118YF2qZqtC5yCfqyDeRaGQhgm5
 BrothPlateMetaData <- read_sheet(sheet_url)
 
 # View the imported data (optional)
-View(BrothPlate1MetaData)
+View(BrothPlateMetaData)
 ```
 
 ```{r Retrieve VitalityFermentationMetaData}
@@ -231,13 +232,6 @@ MultiFiles <- list.files(path = DataIn, pattern = Project, full.names = TRUE)
 MultiFiles
 
 ```
-
-Read multiple parallel files contained in DataIn using purrr::map to step through file names in MultiFiles vector
-```{r read multiple files}
-MultiData <- MultiFiles %>%
-  map_df(~fread_plus(Flnm = ., Skip = "key"))
-```
-
 
 ```{r}
 install.packages("ggplot2")

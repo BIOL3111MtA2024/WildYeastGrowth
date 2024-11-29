@@ -80,8 +80,6 @@ colnames(ODData)
 ```
 
 ```{r rename varible}
-library(dplyr)
-
 # Rename column using pattern matching
 ODData <- ODData %>%
   rename_with(~ gsub("Temperature.*", "Temp_C", .x))  # Replace any name starting with "Temperature"
@@ -111,10 +109,6 @@ head(ODData)
 
 # For plotting it is easier to have data in 'long' format, where Well becomes a Value of a Variable, rather than a separate variable for each well.
 ```{r ODData long}
-library(tidyr)
-library(tidyverse) 
-library(growthrates)
-
 ODDataLong <- pivot_longer(ODData, cols = -c(nm, Time, Temp_C), names_to = "Well", values_to = "OD")
 
 ODDataLong |>
@@ -130,26 +124,26 @@ head(ODDataLong)
 ```{r save rds}
 saveRDS(ODDataLong, file = file.path("..", "Data", "ProcessedData", "ODDataLong.rds"))
 ```
-# Convert time from h:m:s format to numeric format (1,2,3,4,5,6,7,8 etc.)
-```{r}
-library(lubridate)
-library(dplyr)
 
+# Convert time from h:m:s format to numeric format (1,2,3,4,5,6,7,8 etc.)
+
+```{r}
 ODDataLong <- ODDataLong %>% 
   mutate(Time_numeric = as.numeric(hms(Time)) / 3600)  # Converts to hours
 ```
-# Merge ODDataLong with Metadata before attempting data analyses.
-```{r Merge ODData with Metadata}
-library(dplyr)
 
+# Merge ODDataLong with Metadata before attempting data analyses.
+
+```{r Merge ODData with Metadata}
 # Merge ODData with ATMetaData
 Merged_ATData <- ODDataLong %>%
   left_join(ATMetaData, by = "Well")
 
 ```
+
 # Filter out wells that had no media/innoculant to avoid problems in analysis.
+
 ```{r Filter NA Results}
-library(dplyr)
 
 # Exclude wells G10, G11, G12, H10, H11, H12
 Merged_ATData <- Merged_ATData %>%
@@ -170,9 +164,6 @@ Merged_ATData_720 <- Merged_ATData %>%
 ```
 # Double check data is in time numeric form for analyses.
 ```{r Convert to time numeric}
-library(dplyr)
-library(lubridate)
-
 Merged_ATData <- Merged_ATData %>% 
   mutate(Time_numeric = as.numeric(hms(Time)) / 3600)  # Converts to hours
 ```
@@ -184,18 +175,19 @@ head(Merged_ATData)
 ```
 # Growth Curves at OD720.
 ```{r Growth Curves at OD720}
-library(dplyr)
-library(ggplot2)
-ggplot(Merged_ATData_720, aes(x = Time_numeric, y = OD, color = as.factor(Ethanol_Percent), group = Well)) +
+
+Merged_ATData |>
+  filter(nm == 720)|>
+ggplot(aes(x = Time_numeric, y = OD, color = as.factor(Sample_ID), group = Well)) +
   geom_line() +
   geom_point() +
-  facet_wrap(~ Sample_ID) + 
-  labs(
-    title = "Growth Curves for Each Sample (OD at 720 nm)",
-    x = "Time (hours)", 
-    y = "Optical Density (OD720)",
-    color = "Ethanol (%)"
-  ) +
+  facet_grid(rows = vars(Ethanol_Percent)) + 
+#  labs(
+ #   title = "Growth Curves for Each Sample (OD at 720 nm)",
+  #  x = "Time (hours)", 
+   # y = "Optical Density (OD720)",
+    #color = "Ethanol (%)"
+  #) +
   theme_minimal() +
   theme(
     text = element_text(size = 12),
@@ -562,7 +554,7 @@ plot_sample_dual_nm <- function(data, sample_id) {
   # Generate the plot
   plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
     geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
-    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
+    geom_smooth(method = "lm", se = TRUE, aes(color = as.factor(nm)), size = 1) +
     facet_wrap(~ nm, scales = "free_y", ncol = 1) +
     scale_x_continuous(
       limits = c(0, 13),
@@ -609,6 +601,8 @@ perform_anova_for_sample <- function(data, sample_id) {
   
   # Perform ANOVA
   anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
+summary(lm(mumax ~ as.numeric(Ethanol_Percent), data = sample_data))
+  
   
   # Return the ANOVA summary
   return(summary(anova_result))
@@ -631,6 +625,7 @@ perform_anova_for_sample <- function(data, sample_id) {
   # Perform ANOVA
   anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
   
+  summary(linear <- lm(mumax~Ethanol_Percent, data = sample_data))
   # Return the ANOVA summary
   return(summary(anova_result))
 }
