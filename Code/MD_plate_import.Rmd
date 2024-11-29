@@ -14,7 +14,10 @@ This .Rmd imports Molecular Device Absorbance data, with data reorganized into c
 # libraries; Note check actual dependencies
 library(tidyverse) #core tidyverse packages
 library(growthrates)
-
+library(googlesheets4)
+library(growthrates)
+library(broom)
+library(kableExtra)
 ```
 
 
@@ -38,6 +41,21 @@ file_id <- ".csv"
 # DataOneDrive <- "~/OneDrive - Mount Allison University/BIOL2201_2024/StudentDataTest"
 
 ```
+
+```{r Retrieve ATData}
+# Authenticate with Google Sheets (you only need to do this once)
+gs4_deauth()
+
+# Define the Google Sheet URL (replace with your actual URL)
+sheet_url <- "https://docs.google.com/spreadsheets/d/17dDzASxhWDbVpQFXb201vT2oB0rkyi2h4gG33ArOaDA/edit?usp=sharing"
+
+# Read the Google Sheet into R as a data frame
+ATData <- read_sheet(sheet_url)
+
+# View the imported data (optional)
+#View(AtData)
+```
+
 
 # List Data file(s)
 ```{r datafiles}
@@ -84,7 +102,7 @@ colnames(ODData)
 ODData <- ODData %>%
   rename_with(~ gsub("Temperature.*", "Temp_C", .x))  # Replace any name starting with "Temperature"
 ```
-fart
+
 
 ```{r verify rename worked}
 head(ODData)
@@ -162,12 +180,16 @@ Merged_ATData_680 <- Merged_ATData %>%
 Merged_ATData_720 <- Merged_ATData %>%
   filter(nm == 720)
 ```
+
 # Double check data is in time numeric form for analyses.
+
 ```{r Convert to time numeric}
 Merged_ATData <- Merged_ATData %>% 
   mutate(Time_numeric = as.numeric(hms(Time)) / 3600)  # Converts to hours
 ```
+
 # Verify structure prior to spline test for MuMax, problematic structure, will cause problems.
+
 ```{r Verify Merged_ATData Structure}
 #Verify dataset structure
 str(Merged_ATData)  
@@ -215,35 +237,30 @@ ggplot(Merged_ATData_680, aes(x = Time_numeric, y = OD, color = as.factor(Ethano
     breaks = Merged_ATData_680$Time_numeric[Merged_ATData_680$Time_numeric %% 0.25 == 0] %>% unique() %>% sort()
   )
 ```
+
 # Cleaned data for splines test, to ensure no problems arise.
 ```{r Clean data for splines test}
 Merged_ATData_clean <- Merged_ATData |> 
   filter(!is.na(Time_numeric), !is.na(nm), is.finite(Time_numeric), is.finite(nm))
 ```
+
 # Spline Fitting for Determining MuMax and R-squared for all Wells.
+
 ```{r Run splines test for MuMax and R-squared}
-# Load necessary libraries
-library(dplyr)
-library(tidyr)
-library(purrr)
-library(growthrates)
 
 # Step 2: Spline Fitting and Parameter Extraction
 SplineRates_nest <- Merged_ATData |> 
   group_by(nm, Well) |> 
   nest() |> 
-  mutate(
-    # Fit spline with error handling
-    SplineFit = purrr::map(data, ~tryCatch(
+  mutate(SplineFit = purrr::map(data, ~tryCatch(
       growthrates::fit_spline(.$Time_numeric, .$OD),  # Fit spline
       error = function(e) NULL  # Handle errors gracefully
-    )),
-    # Extract maximum growth rate (mumax) or return NA if fit fails
-    mumax = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "par", "mumax") else NA_real_),
-    # Extract R-squared value or return NA if fit fails
-    rsquared = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "rsquared") else NA_real_)# Averaging separately for 608 nm and 720 nm
+    )), # Fit spline with error handling
+    mumax = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "par", "mumax") else NA_real_),  # Extract maximum growth rate (mumax) or return NA if fit fails
+    rsquared = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "rsquared") else NA_real_)     # Extract R-squared value or return NA if fit fails 
     ) |> 
   ungroup()
+# Averaging separately for 608 nm and 720 nm
 
 # Step 3: View and Save Results
 # Select and display key results
@@ -259,14 +276,15 @@ write.csv(SplineRates_results, "SplineRates_results.csv", row.names = FALSE)
 ```
 # Merged splines results with ATMetaData for further analyses
 ```{r Merge results with ATMetaData}
-library(dplyr)
-
 # Merge ODData with ATMetaData
 Merged_ATMetaData_MuMax <- SplineRates_results %>%
   left_join(ATMetaData, by = "Well")
-View(Merged_ATMetaData_MuMax)
+
+#View(Merged_ATMetaData_MuMax)
 ```
+
 # Cleaned the resulting merged data, "Merged_ATMetaData_MuMax", before plotting MuMax vs EtOH concentration.
+
 ```{r Filter NA values}
 # Remove rows with any NA values
 Merged_ATMetaData_MuMax_clean <- na.omit(Merged_ATMetaData_MuMax)
@@ -274,7 +292,7 @@ Merged_ATMetaData_MuMax_clean <- na.omit(Merged_ATMetaData_MuMax)
 # Check the result
 head(Merged_ATMetaData_MuMax_clean)
 
-View(Merged_ATMetaData_MuMax_clean)
+#View(Merged_ATMetaData_MuMax_clean)
 
 ```
 # MuMax vs EtOH Conc for Sample 18 measured at 720 and 680 nm.
@@ -331,7 +349,9 @@ sample_id <- 18
 plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
 ```
+
 # MuMax vs EtOH Conc for Sample 19 measured at 720 and 680 nm.
+
 ```{r MuMax vs EtOH Conc for Sample 19}
 plot_sample_dual_nm <- function(data, sample_id) {
   # Filter the dataset for the given Sample_ID and the desired nm values
@@ -383,7 +403,9 @@ sample_id <- 19
 plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
 ```
+
 # MuMax vs EtOH Conc for Sample 41 measured at 720 and 680 nm.
+
 ```{r MuMax vs EtOH Conc for Sample 41}
 plot_sample_dual_nm <- function(data, sample_id) {
   # Filter the dataset for the given Sample_ID and the desired nm values
@@ -435,7 +457,9 @@ sample_id <- 41
 plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
 ```
+
 # MuMax vs EtOH Conc for Sample 43 measured at 720 and 680 nm.
+
 ```{r MuMax vs EtOH Conc for Sample 43}
 plot_sample_dual_nm <- function(data, sample_id) {
   # Filter the dataset for the given Sample_ID and the desired nm values
@@ -487,7 +511,9 @@ sample_id <- 43
 plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
 ```
+
 # MuMax vs EtOH Conc for Sample 7 measured at 720 and 680 nm.
+
 ```{r MuMax vs EtOH Conc for Sample 7}
 plot_sample_dual_nm <- function(data, sample_id) {
   # Filter the dataset for the given Sample_ID and the desired nm values
@@ -539,7 +565,9 @@ sample_id <- 7
 plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
 ```
+
 # MuMax vs EtOH Conc for Sample 36 measured at 720 and 680 nm.
+
 ```{r MuMax vs EtOH Conc for Sample 36}
 plot_sample_dual_nm <- function(data, sample_id) {
   # Filter the dataset for the given Sample_ID and nm values
@@ -592,7 +620,9 @@ plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
 print(plot)
 
 ```
+
 # ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 18.
+
 ```{r ANOVA Table Sample 18}
 # Define a function for ANOVA for a specific Sample_ID
 perform_anova_for_sample <- function(data, sample_id) {
@@ -615,7 +645,55 @@ anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_i
 print(anova_result)
 
 ```
+
+# Fit Linear Models
+```{r}
+#define exponential decay function for data fitting.
+#exp_decay <- function(x, i, mu){y = i * exp(mu * x)}
+
+#need to merge left_join(Merged_ATMetaData_MuMax_clean, true MetaData so you can talk about growth responses to EtOH in a sensible manner
+ # left_join(Merged_ATMetaData_MuMax_clean, 
+
+MuEtOH_nest <- Merged_ATMetaData_MuMax_clean |>
+  nest(.by = c("Sample_ID", "nm")) |> #want to nest by source
+  mutate(LinearFit = purrr::map(data, ~lm(mumax ~ Ethanol_Percent,
+                                            data = .x)),
+         LinearTidy = purrr::map(LinearFit, tidy),
+         LinearParam = purrr::map(LinearFit, glance),
+         LinearPredict = purrr::map(LinearFit, augment)
+         )
+
+ 
+```
+
+```{r plot mumax vs EtOh}
+
+
+MuEtOH_nest |>
+  unnest(cols = c(LinearPredict)) |>
+  ggplot() +
+  geom_point(aes(x = Ethanol_Percent, y = mumax)) +
+  geom_line(aes(x = Ethanol_Percent, y = .fitted)) +
+  #geom_point(aes(x = Ethanol_Percent, y = .resid), colour = "red") +
+  facet_grid(cols = vars(Sample_ID), rows = vars(nm)) +
+  theme_bw()
+```
+
+
+```{r show mumax vs EtOH fit parameters}
+MuEtOH_nest |>
+unnest(cols = c(LinearTidy)) |>
+ select(-c(data, LinearFit, LinearParam, LinearPredict)) |>
+  select(-c(statistic)) |>
+  pivot_wider(id_cols = c(Sample_ID, nm), names_from = term, values_from = c(estimate, std.error, p.value)) |>
+  kable()
+```
+
+
+
+
 # ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 19.
+
 ```{r ANOVA Table Sample 19}
 # Define a function for ANOVA for a specific Sample_ID
 perform_anova_for_sample <- function(data, sample_id) {
@@ -637,7 +715,9 @@ anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_i
 # Print the ANOVA result for the specified Sample_ID
 print(anova_result)
 ```
+
 # ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 41.
+
 ```{r ANOVA Table Sample 41}
 # Define a function for ANOVA for a specific Sample_ID
 perform_anova_for_sample <- function(data, sample_id) {
@@ -679,7 +759,11 @@ anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_i
 # Print the ANOVA result for the specified Sample_ID
 print(anova_result)
 ```
+
+
 # ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 7.
+
+
 ```{r ANOVA Table Sample 7}
 # Define a function for ANOVA for a specific Sample_ID
 perform_anova_for_sample <- function(data, sample_id) {
