@@ -134,33 +134,22 @@ BrothPlateData <- read_sheet(sheet_url)
 
 
 
-```{r Retrieve NotesMetaData}
-# Authenticate with Google Sheets (you only need to do this once)
-gs4_auth()
-
-# Define the Google Sheet URL (replace with your actual URL)
-sheet_url <- "https://docs.google.com/spreadsheets/d/1phYyUXKip9W4sfQH6zrZxw49RH5AH72zuFHsqgvMoTQ/edit?usp=sharing"
-
-# Read the Google Sheet into R as a data frame
-NotesMetaData <- read_sheet(sheet_url)
-
-# View the imported data (optional)
-View(NotesMetaData)
-```
-
 ```{r Retrieve DataDictionary}
 # Authenticate with Google Sheets (you only need to do this once)
-gs4_auth()
+# gs4_auth()
+
+#Instead of sending a token, googlesheets4 will send an API key. This can be used to access public resources for which no Google sign-in is required. 
+googlesheets4::gs4_deauth()
 
 # Define the Google Sheet URL (replace with your actual URL)
 sheet_url <- "https://docs.google.com/spreadsheets/d/1YN_s-YRdM4j9t_c_l1Z4-Q53KQlURTlDpItovzZNd3g/edit?usp=sharing"
 
 # Read the Google Sheet into R as a data frame
-DataDictionary <- read_sheet(sheet_url)
+DataDictionnary <- read_sheet(sheet_url)
 
-# View the imported data (optional)
-View(DataDictionary)
 ```
+
+
 
 ```{r percent of living yeast compared to total yeast from each sample ID containing yeast graphing on bar graph}
 ggplot(VitalityFermentationMetaData, aes(x = as.factor(Sample_ID), y = Viability_Percent, fill = as.factor(Sample_ID))) +
