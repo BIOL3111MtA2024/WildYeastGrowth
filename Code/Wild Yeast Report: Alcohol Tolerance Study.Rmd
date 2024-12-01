@@ -1,12 +1,35 @@
 ---
-title: "Import and fit microbial plate growth data"
-author: "Maximilian Berthold, Douglas A. Campbell"
+title: "WildYeastReport: AlcoholToleranceStudy"
 date: "`r format(Sys.Date())`"
+author:
+- Carlie Barnhill^1^*
+- Jacob MacPhee^1^*
+- Kenneth McLaughlin^1^*
+
 output:
-  html_document:
-    df_print: paged
-    code_folding: hide
+  bookdown::html_document2:
+    code_folding: show
+    keep_md: yes
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 6
+    fig_caption: yes
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
+```{css, echo=FALSE}
+p.caption {
+  font-size: 18px;
+}
+```
+
+# Affiliations {-}
+^1^Mount Allison University, New Brunswick, Canada  
+
+# Acknowledgements {-}
+^1^Maximilian Berthold and Douglas A. Campbell
+
 
 This .Rmd imports Molecular Device Absorbance data, with data reorganized into columns labelled by treatment.
 
@@ -42,20 +65,22 @@ file_id <- ".csv"
 
 ```
 
-```{r Retrieve ATData}
-# Authenticate with Google Sheets (you only need to do this once)
-gs4_deauth()
+
+```{r Retrieve ATMetaData}
+# gs4_auth()
+
+#Instead of sending a token, googlesheets4 will send an API key. This can be used to access public resources for which no Google sign-in is required. 
+googlesheets4::gs4_deauth()
 
 # Define the Google Sheet URL (replace with your actual URL)
 sheet_url <- "https://docs.google.com/spreadsheets/d/17dDzASxhWDbVpQFXb201vT2oB0rkyi2h4gG33ArOaDA/edit?usp=sharing"
 
 # Read the Google Sheet into R as a data frame
-ATData <- read_sheet(sheet_url)
+ATMetaData <- read_sheet(sheet_url)
 
 # View the imported data (optional)
-#View(AtData)
+View(ATMetaData)
 ```
-
 
 # List Data file(s)
 ```{r datafiles}
@@ -100,7 +125,7 @@ colnames(ODData)
 ```{r rename varible}
 # Rename column using pattern matching
 ODData <- ODData %>%
-  rename_with(~ gsub("Temperature.*", "Temp_C", .x))  # Replace any name starting with "Temperature"
+  rename_with(~ gsub("Temperature.*", "TempC", .x))  # Replace any name starting with "Temperature"
 ```
 
 
@@ -114,7 +139,7 @@ head(ODData)
 
 #remove blank rows by filtering out rows where Temp_C is NA
 ODData <- ODData |>
-  filter(!is.na(Temp_C))
+  filter(!is.na(TempC))
 
 #this is a hack solution, knowing there are only 15 rows of data
 #better way would be to keep the OD settings during import
@@ -127,7 +152,7 @@ head(ODData)
 
 # For plotting it is easier to have data in 'long' format, where Well becomes a Value of a Variable, rather than a separate variable for each well.
 ```{r ODData long}
-ODDataLong <- pivot_longer(ODData, cols = -c(nm, Time, Temp_C), names_to = "Well", values_to = "OD")
+ODDataLong <- pivot_longer(ODData, cols = -c(nm, Time, TempC), names_to = "Well", values_to = "OD")
 
 ODDataLong |>
   ggplot() +
@@ -156,11 +181,10 @@ ODDataLong <- ODDataLong %>%
 # Merge ODData with ATMetaData
 Merged_ATData <- ODDataLong %>%
   left_join(ATMetaData, by = "Well")
-
+#View(Merged_ATData)
 ```
 
 # Filter out wells that had no media/innoculant to avoid problems in analysis.
-
 ```{r Filter NA Results}
 
 # Exclude wells G10, G11, G12, H10, H11, H12
@@ -200,10 +224,10 @@ head(Merged_ATData)
 
 Merged_ATData |>
   filter(nm == 720)|>
-ggplot(aes(x = Time_numeric, y = OD, color = as.factor(Sample_ID), group = Well)) +
+ggplot(aes(x = Time_numeric, y = OD, color = as.factor(SampleID), group = Well)) +
   geom_line() +
   geom_point() +
-  facet_grid(rows = vars(Ethanol_Percent)) + 
+  facet_grid(rows = vars(EthanolPercent)) + 
 #  labs(
  #   title = "Growth Curves for Each Sample (OD at 720 nm)",
   #  x = "Time (hours)", 
@@ -218,30 +242,23 @@ ggplot(aes(x = Time_numeric, y = OD, color = as.factor(Sample_ID), group = Well)
 ```
 # Growth Curves at OD680.
 ```{r Growth Curves at OD680}
-ggplot(Merged_ATData_680, aes(x = Time_numeric, y = OD, color = as.factor(Ethanol_Percent), group = Well)) +
+Merged_ATData |>
+  filter(nm == 680)|>
+ggplot(aes(x = Time_numeric, y = OD, color = as.factor(SampleID), group = Well)) +
   geom_line() +
   geom_point() +
-  facet_wrap(~ Sample_ID) +
-  labs(
-    title = "Growth Curves for Each Sample (OD at 680 nm)",
-    x = "Time (hours)",
-    y = "Optical Density (OD680)",
-    color = "Ethanol (%)"
-  ) +
+  facet_grid(rows = vars(EthanolPercent)) + 
+#  labs(
+ #   title = "Growth Curves for Each Sample (OD at 720 nm)",
+  #  x = "Time (hours)", 
+   # y = "Optical Density (OD720)",
+    #color = "Ethanol (%)"
+  #) +
   theme_minimal() +
   theme(
     text = element_text(size = 12),
-    legend.position = "bottom"
-  ) +
-  scale_x_continuous(
-    breaks = Merged_ATData_680$Time_numeric[Merged_ATData_680$Time_numeric %% 0.25 == 0] %>% unique() %>% sort()
+    legend.position = "bottom"  
   )
-```
-
-# Cleaned data for splines test, to ensure no problems arise.
-```{r Clean data for splines test}
-Merged_ATData_clean <- Merged_ATData |> 
-  filter(!is.na(Time_numeric), !is.na(nm), is.finite(Time_numeric), is.finite(nm))
 ```
 
 # Spline Fitting for Determining MuMax and R-squared for all Wells.
@@ -250,399 +267,35 @@ Merged_ATData_clean <- Merged_ATData |>
 
 # Step 2: Spline Fitting and Parameter Extraction
 SplineRates_nest <- Merged_ATData |> 
-  group_by(nm, Well) |> 
+  group_by(nm, Well, Source, SampleID, EthanolPercent) |> 
   nest() |> 
   mutate(SplineFit = purrr::map(data, ~tryCatch(
       growthrates::fit_spline(.$Time_numeric, .$OD),  # Fit spline
       error = function(e) NULL  # Handle errors gracefully
     )), # Fit spline with error handling
-    mumax = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "par", "mumax") else NA_real_),  # Extract maximum growth rate (mumax) or return NA if fit fails
-    rsquared = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "rsquared") else NA_real_)     # Extract R-squared value or return NA if fit fails 
-    ) |> 
+mumax = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "par", "mumax") else NA_real_),  
+    rsquared = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "rsquared") else NA_real_))|> 
   ungroup()
-# Averaging separately for 608 nm and 720 nm
 
-# Step 3: View and Save Results
-# Select and display key results
-SplineRates_results <- SplineRates_nest |> 
-  select(nm, Well, mumax, rsquared)
+SplineRatesResults <- SplineRates_nest |> 
+  select(nm, Well, mumax, rsquared, Source, SampleID, EthanolPercent)
 
 # View the results
-print(SplineRates_results)
-
-# Save the results to a CSV file
-write.csv(SplineRates_results, "SplineRates_results.csv", row.names = FALSE)
+print(SplineRatesResults)
 
 ```
-# Merged splines results with ATMetaData for further analyses
-```{r Merge results with ATMetaData}
-# Merge ODData with ATMetaData
-Merged_ATMetaData_MuMax <- SplineRates_results %>%
-  left_join(ATMetaData, by = "Well")
 
-#View(Merged_ATMetaData_MuMax)
-```
 
 # Cleaned the resulting merged data, "Merged_ATMetaData_MuMax", before plotting MuMax vs EtOH concentration.
 
 ```{r Filter NA values}
 # Remove rows with any NA values
-Merged_ATMetaData_MuMax_clean <- na.omit(Merged_ATMetaData_MuMax)
+SplineRatesResults <- na.omit(SplineRatesResults)
 
 # Check the result
-head(Merged_ATMetaData_MuMax_clean)
+head(SplineRatesResults)
 
-#View(Merged_ATMetaData_MuMax_clean)
-
-```
-# MuMax vs EtOH Conc for Sample 18 measured at 720 and 680 nm.
-```{r MuMax vs EtOH Conc for Sample 18}
-plot_sample_dual_nm <- function(data, sample_id) {
-  # Filter the dataset for the given Sample_ID and nm values
-  sample_data <- data %>%
-    filter(Sample_ID == sample_id, nm %in% c(680, 720))
-  
-  # Check if the filtered data is valid
-  if (nrow(sample_data) == 0) {
-    stop("No data available for the given Sample_ID and nm values.")
-  }
-  
-  # Generate the plot
-  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
-    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
-    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
-    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
-    scale_x_continuous(
-      limits = c(0, 13),
-      breaks = seq(0, 13, by = 1),
-      expand = c(0, 0)
-    ) +
-    scale_y_continuous(
-      limits = c(0, 0.4),
-      breaks = seq(0, , by = 0.1),
-      expand = c(0, 0)) +
-    labs(
-      x = "Ethanol Concentration (%, v/v)", 
-      y = expression(mu[max]),  # Subscript "max"
-      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
-    ) +
-    theme_minimal() +
-    theme(
-      panel.grid.major = element_line(color = "gray90"),               
-      panel.grid.minor = element_blank(),                               
-      axis.title = element_text(size = 16),                             
-      axis.text = element_text(size = 14),                              
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
-      strip.text = element_text(size = 14, face = "bold"),             
-      panel.border = element_rect(color = "black", fill = NA)          
-    ) +
-    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    guides(fill = guide_legend(title = "Wavelength (nm)"), 
-           color = guide_legend(title = "Wavelength (nm)"))
-  
-  return(plot)
-}
-
-# Example Usage
-sample_id <- 18
-plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
-print(plot)
-```
-
-# MuMax vs EtOH Conc for Sample 19 measured at 720 and 680 nm.
-
-```{r MuMax vs EtOH Conc for Sample 19}
-plot_sample_dual_nm <- function(data, sample_id) {
-  # Filter the dataset for the given Sample_ID and the desired nm values
-  sample_data <- data %>%
-    filter(Sample_ID == sample_id, nm %in% c(680, 720))
-  
-  # Check if the filtered data is valid
-  if (nrow(sample_data) == 0) {
-    stop("No data available for the given Sample_ID and nm values.")
-  }
-  
-  # Generate the plot
-  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
-    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
-    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
-    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
-    scale_x_continuous(
-      limits = c(0, 13),
-      breaks = seq(0, 13, by = 1),
-      expand = c(0, 0)
-    ) +
-    scale_y_continuous(
-      limits = c(0, 0.4),
-      breaks = seq(0, , by = 0.1),
-      expand = c(0, 0)) +
-    labs(
-      x = "Ethanol Concentration (%, v/v)", 
-      y = expression(mu[max]),  # Subscript "max"
-      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
-    ) +
-    theme_minimal() +
-    theme(
-      panel.grid.major = element_line(color = "gray90"),             
-      panel.grid.minor = element_blank(),                            
-      axis.title = element_text(size = 16),                            
-      axis.text = element_text(size = 14),                              
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
-      strip.text = element_text(size = 14, face = "bold"),              
-      panel.border = element_rect(color = "black", fill = NA)          
-    ) +
-    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    guides(fill = guide_legend(title = "Wavelength (nm)"), 
-           color = guide_legend(title = "Wavelength (nm)"))
-  
-  return(plot)
-}
-sample_id <- 19
-plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
-print(plot)
-```
-
-# MuMax vs EtOH Conc for Sample 41 measured at 720 and 680 nm.
-
-```{r MuMax vs EtOH Conc for Sample 41}
-plot_sample_dual_nm <- function(data, sample_id) {
-  # Filter the dataset for the given Sample_ID and the desired nm values
-  sample_data <- data %>%
-    filter(Sample_ID == sample_id, nm %in% c(680, 720))
-  
-  # Check if the filtered data is valid
-  if (nrow(sample_data) == 0) {
-    stop("No data available for the given Sample_ID and nm values.")
-  }
-  
-  # Generate the plot
-  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
-    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
-    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
-    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
-    scale_x_continuous(
-      limits = c(0, 13),
-      breaks = seq(0, 13, by = 1),
-      expand = c(0, 0)
-    ) +
-    scale_y_continuous(
-      limits = c(0, 0.8),
-      breaks = seq(0, , by = 0.2),
-      expand = c(0, 0)) +
-    labs(
-      x = "Ethanol Concentration (%, v/v)", 
-      y = expression(mu[max]),  # Subscript "max"
-      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
-    ) +
-    theme_minimal() +
-    theme(
-      panel.grid.major = element_line(color = "gray90"),               
-      panel.grid.minor = element_blank(),                               
-      axis.title = element_text(size = 16),                          
-      axis.text = element_text(size = 14),                              
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
-      strip.text = element_text(size = 14, face = "bold"),              
-      panel.border = element_rect(color = "black", fill = NA)           
-    ) +
-    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    guides(fill = guide_legend(title = "Wavelength (nm)"), 
-           color = guide_legend(title = "Wavelength (nm)"))
-  
-  return(plot)
-}
-sample_id <- 41
-plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
-print(plot)
-```
-
-# MuMax vs EtOH Conc for Sample 43 measured at 720 and 680 nm.
-
-```{r MuMax vs EtOH Conc for Sample 43}
-plot_sample_dual_nm <- function(data, sample_id) {
-  # Filter the dataset for the given Sample_ID and the desired nm values
-  sample_data <- data %>%
-    filter(Sample_ID == sample_id, nm %in% c(680, 720))
-  
-  # Check if the filtered data is valid
-  if (nrow(sample_data) == 0) {
-    stop("No data available for the given Sample_ID and nm values.")
-  }
-  
-  # Generate the plot
-  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
-    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
-    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
-    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
-    scale_x_continuous(
-      limits = c(0, 13),
-      breaks = seq(0, 13, by = 1),
-      expand = c(0, 0)
-    ) +
-    scale_y_continuous(
-      limits = c(0, 0.8),
-      breaks = seq(0, , by = 0.2),
-      expand = c(0, 0)) +
-    labs(
-      x = "Ethanol Concentration (%, v/v)", 
-      y = expression(mu[max]),  # Subscript "max"
-      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
-    ) +
-    theme_minimal() +
-    theme(
-      panel.grid.major = element_line(color = "gray90"),              
-      panel.grid.minor = element_blank(),                               
-      axis.title = element_text(size = 16),                          
-      axis.text = element_text(size = 14),                           
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
-      strip.text = element_text(size = 14, face = "bold"),              
-      panel.border = element_rect(color = "black", fill = NA)          
-    ) +
-    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    guides(fill = guide_legend(title = "Wavelength (nm)"), 
-           color = guide_legend(title = "Wavelength (nm)"))
-  
-  return(plot)
-}
-sample_id <- 43
-plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
-print(plot)
-```
-
-# MuMax vs EtOH Conc for Sample 7 measured at 720 and 680 nm.
-
-```{r MuMax vs EtOH Conc for Sample 7}
-plot_sample_dual_nm <- function(data, sample_id) {
-  # Filter the dataset for the given Sample_ID and the desired nm values
-  sample_data <- data %>%
-    filter(Sample_ID == sample_id, nm %in% c(680, 720))
-  
-  # Check if the filtered data is valid
-  if (nrow(sample_data) == 0) {
-    stop("No data available for the given Sample_ID and nm values.")
-  }
-  
-  # Generate the plot
-  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
-    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
-    geom_smooth(method = "lm", se = FALSE, aes(color = as.factor(nm)), size = 1) +
-    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
-    scale_x_continuous(
-      limits = c(0, 13),
-      breaks = seq(0, 13, by = 1),
-      expand = c(0, 0)
-    ) +
-    scale_y_continuous(
-      limits = c(-0.1, 0.1),
-      breaks = seq(-0.1, 0.1, by = 0.05),
-      expand = c(0, 0)) +
-    labs(
-      x = "Ethanol Concentration (%, v/v)", 
-      y = expression(mu[max]),  # Subscript "max"
-      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
-    ) +
-    theme_minimal() +
-    theme(
-      panel.grid.major = element_line(color = "gray90"),               
-      panel.grid.minor = element_blank(),                               
-      axis.title = element_text(size = 16),                             
-      axis.text = element_text(size = 14),                              
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
-      strip.text = element_text(size = 14, face = "bold"),              
-      panel.border = element_rect(color = "black", fill = NA)           
-    ) +
-    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    guides(fill = guide_legend(title = "Wavelength (nm)"), 
-           color = guide_legend(title = "Wavelength (nm)"))
-  
-  return(plot)
-}
-sample_id <- 7
-plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
-print(plot)
-```
-
-# MuMax vs EtOH Conc for Sample 36 measured at 720 and 680 nm.
-
-```{r MuMax vs EtOH Conc for Sample 36}
-plot_sample_dual_nm <- function(data, sample_id) {
-  # Filter the dataset for the given Sample_ID and nm values
-  sample_data <- data %>%
-    filter(Sample_ID == sample_id, nm %in% c(680, 720))
-  
-  # Check if the filtered data is valid
-  if (nrow(sample_data) == 0) {
-    stop("No data available for the given Sample_ID and nm values.")
-  }
-  
-  # Generate the plot
-  plot <- ggplot(sample_data, aes(x = Ethanol_Percent, y = mumax, color = as.factor(nm))) +
-    geom_point(size = 3, shape = 21, aes(fill = as.factor(nm)), show.legend = TRUE) +
-    geom_smooth(method = "lm", se = TRUE, aes(color = as.factor(nm)), size = 1) +
-    facet_wrap(~ nm, scales = "free_y", ncol = 1) +
-    scale_x_continuous(
-      limits = c(0, 13),
-      breaks = seq(0, 13, by = 1),
-      expand = c(0, 0)
-    ) +
-    scale_y_continuous(
-      limits = c(-0.1, 0.1),
-      breaks = seq(-0.1, 0.1, by = 0.05),
-      expand = c(0, 0)) +
-    labs(
-      x = "Ethanol Concentration (%, v/v)", 
-      y = expression(mu[max]),  # Subscript "max"
-      title = bquote(mu[max] ~ "vs. Ethanol Concentration (%, v/v) for Sample" ~ .(sample_id))
-    ) +
-    theme_minimal() +
-    theme(
-      panel.grid.major = element_line(color = "gray90"),            
-      panel.grid.minor = element_blank(),                               
-      axis.title = element_text(size = 16),                             
-      axis.text = element_text(size = 14),                              
-      plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
-      strip.text = element_text(size = 14, face = "bold"),              
-      panel.border = element_rect(color = "black", fill = NA)           
-    ) +
-    scale_color_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    scale_fill_manual(values = c("red", "blue"), labels = c("680 nm", "720 nm")) +
-    guides(fill = guide_legend(title = "Wavelength (nm)"), 
-           color = guide_legend(title = "Wavelength (nm)"))
-  
-  return(plot)
-}
-sample_id <- 36
-plot <- plot_sample_dual_nm(Merged_ATMetaData_MuMax_clean, sample_id)
-print(plot)
-
-```
-
-# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 18.
-
-```{r ANOVA Table Sample 18}
-# Define a function for ANOVA for a specific Sample_ID
-perform_anova_for_sample <- function(data, sample_id) {
-  # Subset data dynamically within the function
-  sample_data <- data %>% filter(Sample_ID == sample_id)
-  
-  # Perform ANOVA
-  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
-summary(lm(mumax ~ as.numeric(Ethanol_Percent), data = sample_data))
-  
-  
-  # Return the ANOVA summary
-  return(summary(anova_result))
-}
-
-sample_id <- 18
-anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
-
-# Print the ANOVA result for the specified Sample_ID
-print(anova_result)
+#View(SplineRatesResults)
 
 ```
 
@@ -654,9 +307,9 @@ print(anova_result)
 #need to merge left_join(Merged_ATMetaData_MuMax_clean, true MetaData so you can talk about growth responses to EtOH in a sensible manner
  # left_join(Merged_ATMetaData_MuMax_clean, 
 
-MuEtOH_nest <- Merged_ATMetaData_MuMax_clean |>
-  nest(.by = c("Sample_ID", "nm")) |> #want to nest by source
-  mutate(LinearFit = purrr::map(data, ~lm(mumax ~ Ethanol_Percent,
+MuEtOH_nest <- SplineRatesResults |>
+  nest(.by = c("SampleID", "nm", "Source")) |> #want to nest by source
+  mutate(LinearFit = purrr::map(data, ~lm(mumax ~ EthanolPercent,
                                             data = .x)),
          LinearTidy = purrr::map(LinearFit, tidy),
          LinearParam = purrr::map(LinearFit, glance),
@@ -667,15 +320,13 @@ MuEtOH_nest <- Merged_ATMetaData_MuMax_clean |>
 ```
 
 ```{r plot mumax vs EtOh}
-
-
 MuEtOH_nest |>
   unnest(cols = c(LinearPredict)) |>
   ggplot() +
-  geom_point(aes(x = Ethanol_Percent, y = mumax)) +
-  geom_line(aes(x = Ethanol_Percent, y = .fitted)) +
-  #geom_point(aes(x = Ethanol_Percent, y = .resid), colour = "red") +
-  facet_grid(cols = vars(Sample_ID), rows = vars(nm)) +
+  geom_point(aes(x = EthanolPercent, y = mumax)) +
+  geom_line(aes(x = EthanolPercent, y = .fitted)) +
+  #geom_point(aes(x = EthanolPercent, y = .resid), colour = "red") +
+  facet_grid(cols = vars(SampleID, Source), rows = vars(nm)) +
   theme_bw()
 ```
 
@@ -685,125 +336,10 @@ MuEtOH_nest |>
 unnest(cols = c(LinearTidy)) |>
  select(-c(data, LinearFit, LinearParam, LinearPredict)) |>
   select(-c(statistic)) |>
-  pivot_wider(id_cols = c(Sample_ID, nm), names_from = term, values_from = c(estimate, std.error, p.value)) |>
+  pivot_wider(id_cols = c(SampleID, nm), names_from = term, values_from = c(estimate, std.error, p.value)) |>
   kable()
 ```
 
 
-
-
-# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 19.
-
-```{r ANOVA Table Sample 19}
-# Define a function for ANOVA for a specific Sample_ID
-perform_anova_for_sample <- function(data, sample_id) {
-  # Subset data dynamically within the function
-  sample_data <- data %>% filter(Sample_ID == sample_id)
-  
-  # Perform ANOVA
-  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
-  
-  summary(linear <- lm(mumax~Ethanol_Percent, data = sample_data))
-  # Return the ANOVA summary
-  return(summary(anova_result))
-}
-
-# Example Usage
-sample_id <- 19
-anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
-
-# Print the ANOVA result for the specified Sample_ID
-print(anova_result)
-```
-
-# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 41.
-
-```{r ANOVA Table Sample 41}
-# Define a function for ANOVA for a specific Sample_ID
-perform_anova_for_sample <- function(data, sample_id) {
-  # Subset data dynamically within the function
-  sample_data <- data %>% filter(Sample_ID == sample_id)
-  
-  # Perform ANOVA
-  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
-  
-  # Return the ANOVA summary
-  return(summary(anova_result))
-}
-
-# Example Usage
-sample_id <- 41
-anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
-
-# Print the ANOVA result for the specified Sample_ID
-print(anova_result)
-```
-# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 43.
-```{r ANOVA Table Sample 43}
-# Define a function for ANOVA for a specific Sample_ID
-perform_anova_for_sample <- function(data, sample_id) {
-  # Subset data dynamically within the function
-  sample_data <- data %>% filter(Sample_ID == sample_id)
-  
-  # Perform ANOVA
-  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
-  
-  # Return the ANOVA summary
-  return(summary(anova_result))
-}
-
-# Example Usage
-sample_id <- 43
-anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
-
-# Print the ANOVA result for the specified Sample_ID
-print(anova_result)
-```
-
-
-# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 7.
-
-
-```{r ANOVA Table Sample 7}
-# Define a function for ANOVA for a specific Sample_ID
-perform_anova_for_sample <- function(data, sample_id) {
-  # Subset data dynamically within the function
-  sample_data <- data %>% filter(Sample_ID == sample_id)
-  
-  # Perform ANOVA
-  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
-  
-  # Return the ANOVA summary
-  return(summary(anova_result))
-}
-
-# Example Usage
-sample_id <- 7
-anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
-
-# Print the ANOVA result for the specified Sample_ID
-print(anova_result)
-```
-# ANOVA was done to find any significant interaction between EtOH concentration and MuMax for Sample 36.
-```{r ANOVA Table Sample 36}
-# Define a function for ANOVA for a specific Sample_ID
-perform_anova_for_sample <- function(data, sample_id) {
-  # Subset data dynamically within the function
-  sample_data <- data %>% filter(Sample_ID == sample_id)
-  
-  # Perform ANOVA
-  anova_result <- aov(mumax ~ Ethanol_Percent, data = sample_data)
-  
-  # Return the ANOVA summary
-  return(summary(anova_result))
-}
-
-# Example Usage
-sample_id <- 36
-anova_result <- perform_anova_for_sample(Merged_ATMetaData_MuMax_clean, sample_id)
-
-# Print the ANOVA result for the specified Sample_ID
-print(anova_result)
-```
 
 
