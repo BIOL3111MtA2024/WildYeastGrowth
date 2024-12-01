@@ -66,9 +66,7 @@ The GoogleSheet interface can be tricky.
 Repeatedly reading from GoogleDrive can provoke a throttle from Google.
 
 ```{r Retrieve ATMetaData}
-# Authenticate with Google Sheets (you only need to do this once)
 # gs4_auth()
-
 
 #Instead of sending a token, googlesheets4 will send an API key. This can be used to access public resources for which no Google sign-in is required. 
 googlesheets4::gs4_deauth()
@@ -83,7 +81,26 @@ ATMetaData <- read_sheet(sheet_url)
 View(ATMetaData)
 ```
 
-```{r Retrieve SpecificGravityMetaData}
+
+
+```{r Retrieve MetaData}
+# Authenticate with Google Sheets (you only need to do this once)
+# gs4_auth()
+
+#Instead of sending a token, googlesheets4 will send an API key. This can be used to access public resources for which no Google sign-in is required. 
+googlesheets4::gs4_deauth()
+
+# Define the Google Sheet URL (replace with your actual URL)
+sheet_url <- "https://docs.google.com/spreadsheets/d/1HDlxd_bt9I49CQGU18b3h6Df69DG3vQAwbIMZTEdpBQ/edit?usp=sharing"
+
+# Read the Google Sheet into R as a data frame
+MetaData <- read_sheet(sheet_url)
+
+```
+
+
+
+```{r Retrieve SpecificGravityData}
 # Authenticate with Google Sheets (you only need to do this once)
 # gs4_auth()
 
@@ -94,13 +111,13 @@ googlesheets4::gs4_deauth()
 sheet_url <- "https://docs.google.com/spreadsheets/d/15Qd3DYkeRX4FCy84Uw9ns9L6Bq6P959csP-opdGvBME/edit?usp=sharing"
 
 # Read the Google Sheet into R as a data frame
-SpecificGravityMetaData <- read_sheet(sheet_url)
+SpecificGravityData <- read_sheet(sheet_url)
 
-# View the imported data (optional)
-View(SpecificGravityMetaData)
 ```
 
-```{r Retrieve BrothPlateMetaData}
+
+
+```{r Retrieve BrothPlateData}
 # Authenticate with Google Sheets (you only need to do this once)
 # gs4_auth()
 
@@ -111,25 +128,11 @@ googlesheets4::gs4_deauth()
 sheet_url <- "https://docs.google.com/spreadsheets/d/118YF2qZqtC5yCfqyDeRaGQhgm5v8mn6wC_6ae1Rnyik/edit?usp=sharing"
 
 # Read the Google Sheet into R as a data frame
-BrothPlateMetaData <- read_sheet(sheet_url)
+BrothPlateData <- read_sheet(sheet_url)
 
-# View the imported data (optional)
-View(BrothPlateMetaData)
 ```
 
-```{r Retrieve VitalityFermentationMetaData}
-# Authenticate with Google Sheets (you only need to do this once)
-gs4_auth()
 
-# Define the Google Sheet URL (replace with your actual URL)
-sheet_url <- "https://docs.google.com/spreadsheets/d/1mKZNT4blSBhuVf4K8_ddhGqOaep2aScUVqMXixWkkwI/edit?usp=sharing"
-
-# Read the Google Sheet into R as a data frame
-VitalityFermentationMetaData <- read_sheet(sheet_url)
-
-# View the imported data (optional)
-View(VitalityFermentationMetaData)
-```
 
 ```{r Retrieve NotesMetaData}
 # Authenticate with Google Sheets (you only need to do this once)
