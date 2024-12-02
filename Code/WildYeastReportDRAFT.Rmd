@@ -168,12 +168,12 @@ head(MergedSpecificGravityData)
 MergedBrothPlateData |> 
 filter(!is.na(SampleID)) |> 
 filter(!Source %in% c("Air", "Apple", "OakTreeBark")) |> 
-ggplot(aes(x = as.factor(Source), y = ViabilityPercent, fill = BrothYPDYesNo, color = BrothYPDYesNo , shape = as.factor(BrothTempC))) +
+ggplot(aes(x = as.factor(Source), y = ViabilityPercent, fill = BrothType, color = BrothType , shape = as.factor(GrowthTempC))) +
 geom_point(size = 4) + # Use points
 coord_cartesian(ylim = c(0 , 100)) +
-geom_text(aes(label = round(ViabilityPercent, 1)), vjust = -0.75, hjust = 0.5, size = 5, color = "black") +  
+geom_text(aes(label = round(ViabilityPercent, 1)), vjust = -0.5, hjust = 1.5, size = 3.25, color = "black", face = "bold") +  
 scale_x_discrete(drop = TRUE) +  # Drop unused x-axis levels
-labs(title = "Viability Percent by Sample ID", x = "Sample ID", y = "Viability Percent (%)", color = "BrothYPDYesNo", fill = "BrothYPDYesNo") + 
+labs(title = "Viability Percent by Source, Broth Type and Temperature", x = "Source", y = "Viability Percent (%)", color = "Broth Type", fill = "Broth Type") + 
 theme_minimal(base_size = 12) +
 theme(strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = 0, hjust = 0.5),plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
 
@@ -210,11 +210,12 @@ print(combined_sg_values)
 
 # The SG of each sample ID versus time collected throught the brewing proccess
 ```{r Specific Gravity Over Time by Source}
-ggplot(MergedSpecificGravityData, aes(x = Time, y = SpecificGravity, color = as.factor(SampleID), group = SampleID)) +
+ggplot(MergedSpecificGravityData, aes(x = Time, y = SpecificGravity, color = BrothType , shape = as.factor(GrowthTempC))) +
 geom_line(size = 1) + 
 geom_point(size = 2) + 
+coord_cartesian(ylim = c(0 , 1.5)) +
 facet_grid(cols = vars(Source)) +  # Facet by Source
-labs(x = "Time", y = "Specific Gravity", color = "Sample ID", title = "Specific Gravity Over Time by Source") +
+labs(x = "Time", y = "Specific Gravity", color = "Broth Type", title = "Specific Gravity Over Time by Source") +
 theme_minimal(base_size = 12) +
 theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = , hjust = 1))
 ```
@@ -222,45 +223,45 @@ theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.te
 # The following code is for the rate of fermentation versus time for each sample type-- this shows if the rate of alcohol production changes as the brewing time increases
 ```{r Rate of Change of Specific Gravity Over Time by Source}
 # Calculate rate of change in Specific Gravity
-MergedSpecificGravityData <- MergedSpecificGravityData %>%
-group_by(SampleID) %>%
-mutate(SGRate = c(NA, diff(SpecificGravity) / diff(Time)))
+# MergedSpecificGravityData <- MergedSpecificGravityData %>%
+# group_by(SampleID) %>%
+# mutate(SGRate = c(NA, diff(SpecificGravity) / diff(Time)))
 # Filter missing values to allow connected lines
-MergedSpecificGravityData <- MergedSpecificGravityData %>%
-filter(!is.na(SGRate) & !is.na(Time))
+# MergedSpecificGravityData <- MergedSpecificGravityData %>%
+# filter(!is.na(SGRate) & !is.na(Time))
 
 # Plot with facets by Source and colors by SampleID
-ggplot(MergedSpecificGravityData, aes(x = Time, y = SGRate, color = as.factor(SampleID), group = SampleID)) +
-geom_line(size = 1, na.rm = TRUE) + 
-geom_point(size = 2) +  
-facet_grid(cols = vars(Source)) +  # Facet by Source
-labs(x = "Time",
-y = "Specific Gravity Rate of Change",
-color = "Sample ID",  
-title = "Rate of Change of Specific Gravity Over Time by Source") +
-theme_minimal(base_size = 12) +
-theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-strip.text = element_text(size = 10, face = "bold"),
-axis.text.x = element_text(angle = 0, hjust = 1))
+# ggplot(MergedSpecificGravityData, aes(x = Time, y = SGRate, color = as.factor(SampleID), group = SampleID)) +
+# geom_line(size = 1, na.rm = TRUE) + 
+# geom_point(size = 2) +  
+# facet_grid(cols = vars(Source)) +  # Facet by Source
+# labs(x = "Time",
+# y = "Specific Gravity Rate of Change",
+# color = "Sample ID",  
+# title = "Rate of Change of Specific Gravity Over Time by Source") +
+# theme_minimal(base_size = 12) +
+# theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+# strip.text = element_text(size = 10, face = "bold"),
+# axis.text.x = element_text(angle = 0, hjust = 1))
 
 ```
 
 # Making a graph to show how long each brew took to reach the final SG
 ```{r Completion Time by Source}
 # Calculate completion time for each SampleID
-completion_times <- MergedSpecificGravityData %>%
-group_by(SampleID, Source) %>%  # Include Source for grouping
-filter(SpecificGravity == min(SpecificGravity, na.rm = TRUE)) %>%
-summarize(Completion_Time = min(Time), .groups = "drop")
+# completion_times <- MergedSpecificGravityData %>%
+# group_by(SampleID, Source) %>%  # Include Source for grouping
+# filter(SpecificGravity == min(SpecificGravity, na.rm = TRUE)) %>%
+# summarize(Completion_Time = min(Time), .groups = "drop")
 
 # Plot of Completion Times without facets
-ggplot(completion_times, aes(x = factor(SampleID), y = Completion_Time, color = Source)) +
-geom_point(size = 4) +
-geom_text(aes(label = round(Completion_Time, 1)), vjust = -0.75, hjust = 0.75, size = 5, color = "black") +
-labs(title = "Completion Time by Source and Sample ID",x = "Sample ID", y = "Completion Time (hours)", color = "Source") +
-theme_minimal(base_size = 12) +
-theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = 45, hjust = 1),
-legend.position = "right")
+# ggplot(completion_times, aes(x = factor(SampleID), y = Completion_Time, color = Source)) +
+# geom_point(size = 4) +
+# geom_text(aes(label = round(Completion_Time, 1)), vjust = -0.75, hjust = 0.75, size = 5, color = "black") +
+# labs(title = "Completion Time by Source and Sample ID",x = "Sample ID", y = "Completion Time (hours)", color = "Source") +
+# theme_minimal(base_size = 12) +
+# theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = 45, hjust = 1),
+# legend.position = "right")
 ```
 
 
@@ -268,20 +269,21 @@ legend.position = "right")
 ```{r Apparent Attenuation by Source}
 # Calculate Apparent Attenuation for Each Sample
 AttenuationData <- MergedSpecificGravityData %>%
-group_by(SampleID, Source) %>%  # Include Source for grouping
+group_by(Source , BrothType , GrowthTempC) %>%  # Include Source for grouping
 summarize(InitialSG = max(SpecificGravity, na.rm = TRUE),  # Initial SG is the max
 FinalSG = min(SpecificGravity, na.rm = TRUE),    # Final SG is the min
 .groups = "drop") %>%
 mutate(ApparentAttenuation = ((InitialSG - FinalSG) / (InitialSG - 1)) * 100)
 
 # Plot Apparent Attenuation without facets
-ggplot(AttenuationData, aes(x = factor(SampleID), y = ApparentAttenuation, color = Source)) +
+ggplot(AttenuationData, aes(x = Source, y = ApparentAttenuation, color = BrothType , shape = as.factor(GrowthTempC))) +
 geom_point(size = 4) +  # Plot points
-geom_text(aes(label = round(ApparentAttenuation, 1)), vjust = -0.75, hjust = 0.5, size = 5, color = "black") +  # Add text labels above points
-labs(title = "Apparent Attenuation by Source and Sample ID", x = "Sample ID", y = "Apparent Attenuation (%)", color = "Source") +
+coord_cartesian(ylim = c(0 , 100)) +
+geom_text(aes(label = round(ApparentAttenuation, 1)), vjust = -0.5, hjust = 1.5, size = 3.25, color = "black") +  # Add text labels above points
+labs(title = "Apparent Attenuation (%) by Source, Broth Type and Temperature", x = "Source", y = "Apparent Attenuation (%)", color = "Broth Type") +
 scale_x_discrete(drop = TRUE) +  # Drop unused levels in x-axis
 theme_minimal(base_size = 12) +
-theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = 45, hjust = 1),
+theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = 0, hjust = 0.5),
 legend.position = "right")
 ```
 
