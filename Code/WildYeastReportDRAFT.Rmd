@@ -215,7 +215,7 @@ geom_line(size = 1) +
 geom_point(size = 2) + 
 coord_cartesian(ylim = c(0 , 1.5)) +
 facet_grid(cols = vars(Source)) +  # Facet by Source
-labs(x = "Time", y = "Specific Gravity", color = "Broth Type", title = "Specific Gravity Over Time by Source") +
+labs(x = "Time (hours)", y = "Specific Gravity", color = "Broth Type", title = "Specific Gravity Over Time by Source") +
 theme_minimal(base_size = 12) +
 theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = , hjust = 1))
 ```
