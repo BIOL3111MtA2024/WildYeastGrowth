@@ -1,5 +1,5 @@
 ---
-title: "Wild Yeast Report DRAFT"
+title: "Wild Yeast Report: Vitality and Specific Gravity Study"
 date: "`r format(Sys.Date())`"
 author:
 - Carlie Barnhill^1^*
@@ -77,7 +77,7 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/17dDzASxhWDbVpQFXb201vT2oB0
 ATMetaData <- read_sheet(sheet_url)
 
 # View the imported data (optional)
-View(ATMetaData)
+#View(ATMetaData)
 ```
 
 
@@ -94,7 +94,7 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/1HDlxd_bt9I49CQGU18b3h6Df69
 
 # Read the Google Sheet into R as a data frame
 MetaData <- read_sheet(sheet_url)
-
+#View(MetaData)
 ```
 
 
@@ -128,7 +128,7 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/118YF2qZqtC5yCfqyDeRaGQhgm5
 
 # Read the Google Sheet into R as a data frame
 BrothPlateData <- read_sheet(sheet_url)
-
+#View(BrothPlateData)
 ```
 
 
@@ -148,125 +148,136 @@ DataDictionnary <- read_sheet(sheet_url)
 
 ```
 
-
-
-```{r percent of living yeast compared to total yeast from each sample ID containing yeast graphing on bar graph}
-ggplot(VitalityFermentationMetaData, aes(x = as.factor(Sample_ID), y = Viability_Percent, fill = as.factor(Sample_ID))) +
-  geom_bar(stat = "identity", alpha = 0.7) +  # Bars for Sample_ID
-  geom_text(aes(label = round(Viability_Percent, 1)), 
-            vjust = -0.5, hjust = 0.5, size = 4, color = "black") +  # Add centered data labels
-  theme_minimal() +
-  labs(title = "Viability Percent by Sample ID", x = "Sample ID", y = "Viability Percent") + theme( axis.text.x = element_text(angle = 0, hjust = 0.5),  # Center x-axis labels
-legend.position = "none") + scale_fill_manual (values = c( "7" = "orange", "18" = "blue", "19" = "green", "36" = "red", "41" = "purple", "43" = "black"))
+# Merge BrothPlateData with MetaData, via leftjoin().
+```{r Merge BrothPlateData with MetaData}
+MergedBrothPlateData <- BrothPlateData %>%
+  left_join(MetaData, by = "SampleID")
+head(MergedBrothPlateData)
 ```
 
-```{r merged data metadata}
-VitalityFermentationMetaData_2 <- left_join(VitalityFermentationMetaData, BrothPlateMetaData, by = "Sample_ID")
+# Merge SpecificGravityData with MetaData, via leftjoin().
+```{r Merge BrothPlateData with MetaData}
+MergedSpecificGravityData <- SpecificGravityData %>%
+  left_join(MetaData, by = "SampleID")
+head(MergedSpecificGravityData)
+#View(MergedSpecificGravityData)
 ```
 
-```{r percent of living yeast compared to total yeast from each sample ID containing yeast graphing on bar graph}
-VitalityFermentationMetaData_2 |>
-filter(!is.na(Sample_ID)) |>
-ggplot( aes(x = as.factor(Sample_ID), y = Viability_Percent, fill = as.factor(Broth_Source))) +
-  geom_point() + 
-  #geom_col() +  # Bars for Sample_ID
-  geom_text(aes(label = round(Viability_Percent, 1)), 
-            vjust = -0.5, hjust = 0.5, size = 4, color = "black") +  # Add centered data labels
-  facet_grid(cols = vars(Broth_Source))
- #theme_minimal() +
- # labs(title = "Viability Percent by Sample ID", x = "Sample ID", y = "Viability Percent") +
+# Percent of living yeast compared to total yeast from each sample ID containing yeast graphing on bar graph
+```{r Viability Percent by Sample ID}
+MergedBrothPlateData |> 
+filter(!is.na(SampleID)) |> 
+filter(!Source %in% c("Air", "Apple", "OakTreeBark")) |> 
+ggplot(aes(x = as.factor(SampleID), y = ViabilityPercent, fill = Source, color = Source)) +
+geom_point(size = 4) +  # Use points
+geom_text(aes(label = round(ViabilityPercent, 1)), vjust = -0.75, hjust = 0.5, size = 5, color = "black") +  
+scale_x_discrete(drop = TRUE) +  # Drop unused x-axis levels
+labs(title = "Viability Percent by Sample ID", x = "Sample ID", y = "Viability Percent", color = "Source", fill = "Source") + 
+theme_minimal(base_size = 12) +
+theme(strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = 0, hjust = 0.5),plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
+
 #theme( axis.text.x = element_text(angle = 0, hjust = 0.5),  # Center x-axis labels
-#legend.position = "none") + 
-  #scale_fill_manual (values = c( "7" = "orange", "18" = "blue", "19" = "green", "36" = "red", "41" = "purple", "43" = "black"))
+#legend.position = "none")
 ```
 
-```{r final acohol percent of each sample }
-# Extract SG at Time = 0
-initial_sg_values <- SpecificGravityMetaData %>%
-  filter(Time == 0) %>%
-  select(Sample_ID, Specific_Gravity) %>%
-  rename(Initial_SG = Specific_Gravity)
+# Final alcohol percent of each sample tested
+```{r final alcohol percent of each sample }
+# Find initial Specific Gravity (SG) at Time = 0
+initial_sg_values <- MergedSpecificGravityData %>%
+filter(Time == 0) %>%
+select(SampleID, SpecificGravity) %>%
+rename(InitialSG = SpecificGravity)
 
-# Extract Final SG the minimum SG for each Sample_ID
-final_sg_values <- SpecificGravityMetaData %>%
-  group_by(Sample_ID) %>%
-  summarize(Final_SG = min(Specific_Gravity, na.rm = TRUE), .groups = "drop")
+# Find final SG for each SampleID
+final_sg_values <- MergedSpecificGravityData %>%
+group_by(SampleID) %>%
+summarize(FinalSG = min(SpecificGravity, na.rm = TRUE), .groups = "drop")
 
-# Merge Initial SG and Final SG
-combined_sg_values <- merge(initial_sg_values, final_sg_values, by = "Sample_ID")
+# merge initial SG and final SG into a single dataset
+combined_sg_values <- merge(initial_sg_values, final_sg_values, by = "SampleID")
 
-# Calculate ABV (Alcohol By Volume) getting the percent of alcohol in the final beer
+# calculate ABV 
 combined_sg_values <- combined_sg_values %>%
-  mutate(ABV = (Initial_SG - Final_SG) * 131.25)
-
-# making a table of final results
+mutate(ABV = (InitialSG - FinalSG) * 131.25)
 print(combined_sg_values)
+
 ```
 
-```{r the SG of each sample ID versus time collected throught the brewing proccess}
-# making sure the data is formatted good
-SpecificGravityMetaData$Sample_ID <- as.factor(SpecificGravityMetaData$Sample_ID)
-SpecificGravityMetaData$Time <- as.numeric(SpecificGravityMetaData$Time)
-
-# making the graph
-library(ggplot2)
-ggplot(SpecificGravityMetaData, aes(x = Time, y = Specific_Gravity, color = Sample_ID, group = Sample_ID)) + geom_line(size = 1) + geom_point(size = 2) + labs( title = "Specific Gravity Over Time by Yeast Strain", x = "Time (hours)", y = "Specific Gravity", color = "Sample ID") +
-
-theme_minimal() + scale_color_manual(values = c("7" = "orange", "18" = "blue", "19" = "green", "36" = "red", "41" = "purple", "43" = "black"))
+# The SG of each sample ID versus time collected throught the brewing proccess
+```{r Specific Gravity Over Time by Source}
+ggplot(MergedSpecificGravityData, aes(x = Time, y = SpecificGravity, color = as.factor(SampleID), group = SampleID)) +
+geom_line(size = 1) + 
+geom_point(size = 2) + 
+facet_grid(cols = vars(Source)) +  # Facet by Source
+labs(x = "Time", y = "Specific Gravity", color = "Sample ID", title = "Specific Gravity Over Time by Source") +
+theme_minimal(base_size = 12) +
+theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-```{r the following code is for the rate of fermentation versus time for each sample type-- this shows if the rate of alcohol production changes as the brewing time increases}
-library(dplyr)
-library(ggplot2)
+# The following code is for the rate of fermentation versus time for each sample type-- this shows if the rate of alcohol production changes as the brewing time increases
+```{r Rate of Change of Specific Gravity Over Time by Source}
+# Calculate rate of change in Specific Gravity
+MergedSpecificGravityData <- MergedSpecificGravityData %>%
+group_by(SampleID) %>%
+mutate(SGRate = c(NA, diff(SpecificGravity) / diff(Time)))
+# Filter missing values to allow connected lines
+MergedSpecificGravityData <- MergedSpecificGravityData %>%
+filter(!is.na(SGRate) & !is.na(Time))
 
-# finding the rate of change for Specific Gravity vs. Time
-SpecificGravityMetaData <- SpecificGravityMetaData %>%
-  group_by(Sample_ID) %>%
-  mutate(SG_Rate = c(NA, diff(Specific_Gravity) / diff(Time)))
+# Plot with facets by Source and colors by SampleID
+ggplot(MergedSpecificGravityData, aes(x = Time, y = SGRate, color = as.factor(SampleID), group = SampleID)) +
+geom_line(size = 1, na.rm = TRUE) + 
+geom_point(size = 2) +  
+facet_grid(cols = vars(Source)) +  # Facet by Source
+labs(x = "Time",
+y = "Specific Gravity Rate of Change",
+color = "Sample ID",  
+title = "Rate of Change of Specific Gravity Over Time by Source") +
+theme_minimal(base_size = 12) +
+theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+strip.text = element_text(size = 10, face = "bold"),
+axis.text.x = element_text(angle = 0, hjust = 1))
 
-# ploting
-ggplot(SpecificGravityMetaData, aes(x = Time, y = SG_Rate, color = as.factor(Sample_ID))) + geom_line(size = 1) + geom_point(size = 2) + labs(title = "Fermentation Rate versus Time of each Sample ID", x = "Time (hours)", y = "SG Rate (SG/hour)", color = "Sample ID") + facet_wrap(~ Sample_ID, scales = "free_y") +  
-  theme_minimal() +
-  theme(legend.position = "none") +  
-  scale_color_manual(values = c( "7" = "orange", "18" = "blue", "19" = "green", "36" = "red", "41" = "purple", "43" = "black"))
 ```
 
-```{r making a graph to show how long each brew took to reach the final SG }
-library(dplyr)
-library(ggplot2)
+# Making a graph to show how long each brew took to reach the final SG
+```{r Completion Time by Source}
+# Calculate completion time for each SampleID
+completion_times <- MergedSpecificGravityData %>%
+group_by(SampleID, Source) %>%  # Include Source for grouping
+filter(SpecificGravity == min(SpecificGravity, na.rm = TRUE)) %>%
+summarize(Completion_Time = min(Time), .groups = "drop")
 
-# calculating the Final SG and the time taken to reach it for each Sample_ID
-completion_times <- SpecificGravityMetaData %>%
-  group_by(Sample_ID) %>%
-  filter(Specific_Gravity == min(Specific_Gravity, na.rm = TRUE)) %>%
-  summarize(Completion_Time = min(Time), .groups = "drop")  # telling it to use earliest collection time if multiple exist
-
-# making the graph
-ggplot(completion_times, aes(x = factor(Sample_ID), y = Completion_Time, fill = as.factor(Sample_ID))) +
-  geom_bar(stat = "identity") + labs(title = "Time Taken to Reach the Final Specific Gravity", x = "Sample ID", y = "Completion Time (hours)") +
-  theme_minimal() + scale_fill_manual(values = c("7" = "orange", "18" = "blue", "19" = "green", "36" = "red", "41" = "purple", "43" = "black"))
+# Plot of Completion Times without facets
+ggplot(completion_times, aes(x = factor(SampleID), y = Completion_Time, color = Source)) +
+geom_point(size = 4) +
+geom_text(aes(label = round(Completion_Time, 1)), vjust = -0.75, hjust = 0.75, size = 5, color = "black") +
+labs(title = "Completion Time by Source and Sample ID",x = "Sample ID", y = "Completion Time (hours)", color = "Source") +
+theme_minimal(base_size = 12) +
+theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = 45, hjust = 1),
+legend.position = "right")
 ```
 
-```{r finding out the atenuation of the sample this will identify the efficency of the yeast strain by comparing the sugar content in the initial wart to the amount of sugars left over giving a percent of sugars consumed and converted to alcohol or CO2}
-library(dplyr)
-library(ggplot2)
 
-# Attenuation for Each Sample
-attenuation_data <- SpecificGravityMetaData %>%
-  group_by(Sample_ID) %>%
-  summarize(
-    Initial_SG = max(Specific_Gravity, na.rm = TRUE),  # initial SG is the max
-    Final_SG = min(Specific_Gravity, na.rm = TRUE),    # Final SG is the min
-    .groups = "drop"
-  ) %>%
-  mutate(
-    Apparent_Attenuation = ((Initial_SG - Final_SG) / (Initial_SG - 1)) * 100
-  )
+# Finding out the atenuation of the sample this will identify the efficency of the yeast strain by comparing the sugar content in the initial wart to the amount of sugars left over giving a percent of sugars consumed and converted to alcohol or CO2
+```{r Apparent Attenuation by Source}
+# Calculate Apparent Attenuation for Each Sample
+AttenuationData <- MergedSpecificGravityData %>%
+group_by(SampleID, Source) %>%  # Include Source for grouping
+summarize(InitialSG = max(SpecificGravity, na.rm = TRUE),  # Initial SG is the max
+FinalSG = min(SpecificGravity, na.rm = TRUE),    # Final SG is the min
+.groups = "drop") %>%
+mutate(ApparentAttenuation = ((InitialSG - FinalSG) / (InitialSG - 1)) * 100)
 
-# graphing
-ggplot(attenuation_data, aes(x = factor(Sample_ID), y = Apparent_Attenuation, fill = as.factor(Sample_ID))) + geom_bar(stat = "identity") + labs( title = "Apparent Attenuation by Sample ID", x = "Sample ID", y = "Apparent Attenuation (%)") +
-  theme_minimal() +
-  scale_fill_manual( values = c( "7" = "orange", "18" = "blue", "19" = "green", "36" = "red", "41" = "purple", "43" = "black"))
+# Plot Apparent Attenuation without facets
+ggplot(AttenuationData, aes(x = factor(SampleID), y = ApparentAttenuation, color = Source)) +
+geom_point(size = 4) +  # Plot points
+geom_text(aes(label = round(ApparentAttenuation, 1)), vjust = -0.75, hjust = 0.5, size = 5, color = "black") +  # Add text labels above points
+labs(title = "Apparent Attenuation by Source and Sample ID", x = "Sample ID", y = "Apparent Attenuation (%)", color = "Source") +
+scale_x_discrete(drop = TRUE) +  # Drop unused levels in x-axis
+theme_minimal(base_size = 12) +
+theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = 45, hjust = 1),
+legend.position = "right")
 ```
 
 \newpage
