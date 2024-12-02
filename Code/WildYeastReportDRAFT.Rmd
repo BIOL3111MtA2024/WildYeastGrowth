@@ -168,11 +168,12 @@ head(MergedSpecificGravityData)
 MergedBrothPlateData |> 
 filter(!is.na(SampleID)) |> 
 filter(!Source %in% c("Air", "Apple", "OakTreeBark")) |> 
-ggplot(aes(x = as.factor(SampleID), y = ViabilityPercent, fill = Source, color = Source)) +
-geom_point(size = 4) +  # Use points
+ggplot(aes(x = as.factor(Source), y = ViabilityPercent, fill = BrothYPDYesNo, color = BrothYPDYesNo , shape = as.factor(BrothTempC))) +
+geom_point(size = 4) + # Use points
+coord_cartesian(ylim = c(0 , 100)) +
 geom_text(aes(label = round(ViabilityPercent, 1)), vjust = -0.75, hjust = 0.5, size = 5, color = "black") +  
 scale_x_discrete(drop = TRUE) +  # Drop unused x-axis levels
-labs(title = "Viability Percent by Sample ID", x = "Sample ID", y = "Viability Percent", color = "Source", fill = "Source") + 
+labs(title = "Viability Percent by Sample ID", x = "Sample ID", y = "Viability Percent (%)", color = "BrothYPDYesNo", fill = "BrothYPDYesNo") + 
 theme_minimal(base_size = 12) +
 theme(strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = 0, hjust = 0.5),plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
 
@@ -184,7 +185,9 @@ theme(strip.text = element_text(size = 10, face = "bold"), axis.text.x = element
 ```{r final alcohol percent of each sample }
 # Find initial Specific Gravity (SG) at Time = 0
 initial_sg_values <- MergedSpecificGravityData %>%
-filter(Time == 0) %>%
+filter(Time == 0) 
+
+%>%
 select(SampleID, SpecificGravity) %>%
 rename(InitialSG = SpecificGravity)
 
@@ -201,6 +204,8 @@ combined_sg_values <- combined_sg_values %>%
 mutate(ABV = (InitialSG - FinalSG) * 131.25)
 print(combined_sg_values)
 
+#View(combined_sg_values)
+
 ```
 
 # The SG of each sample ID versus time collected throught the brewing proccess
@@ -211,7 +216,7 @@ geom_point(size = 2) +
 facet_grid(cols = vars(Source)) +  # Facet by Source
 labs(x = "Time", y = "Specific Gravity", color = "Sample ID", title = "Specific Gravity Over Time by Source") +
 theme_minimal(base_size = 12) +
-theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = 45, hjust = 1))
+theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14), strip.text = element_text(size = 10, face = "bold"), axis.text.x = element_text(angle = , hjust = 1))
 ```
 
 # The following code is for the rate of fermentation versus time for each sample type-- this shows if the rate of alcohol production changes as the brewing time increases

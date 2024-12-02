@@ -79,7 +79,7 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/17dDzASxhWDbVpQFXb201vT2oB0
 ATMetaData <- read_sheet(sheet_url)
 
 # View the imported data (optional)
-View(ATMetaData)
+# View(ATMetaData)
 ```
 
 # List Data file(s)
@@ -209,7 +209,7 @@ Merged_ATData_720 <- Merged_ATData %>%
 
 ```{r Convert to time numeric}
 Merged_ATData <- Merged_ATData %>% 
-  mutate(Time_numeric = as.numeric(hms(Time)) / 3600)  # Converts to hours
+  mutate(Time_hour = as.numeric(hms(Time)) / 3600)  # Converts to hours
 ```
 
 # Verify structure prior to spline test for MuMax, problematic structure, will cause problems.
@@ -224,7 +224,7 @@ head(Merged_ATData)
 
 Merged_ATData |>
   filter(nm == 720)|>
-ggplot(aes(x = Time_numeric, y = OD, color = as.factor(SampleID), group = Well)) +
+ggplot(aes(x = Time_hour, y = OD, color = as.factor(SampleID), group = Well)) +
   geom_line() +
   geom_point() +
   facet_grid(rows = vars(EthanolPercent)) + 
@@ -270,15 +270,15 @@ SplineRates_nest <- Merged_ATData |>
   group_by(nm, Well, Source, SampleID, EthanolPercent) |> 
   nest() |> 
   mutate(SplineFit = purrr::map(data, ~tryCatch(
-      growthrates::fit_spline(.$Time_numeric, .$OD),  # Fit spline
+      growthrates::fit_spline(.$Time_hour, .$OD),  # Fit spline
       error = function(e) NULL  # Handle errors gracefully
     )), # Fit spline with error handling
-mumax = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "par", "mumax") else NA_real_),  
+mumax_hour = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "par", "mumax") else NA_real_),  
     rsquared = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "rsquared") else NA_real_))|> 
   ungroup()
 
 SplineRatesResults <- SplineRates_nest |> 
-  select(nm, Well, mumax, rsquared, Source, SampleID, EthanolPercent)
+  select(nm, Well, mumax_hour, rsquared, Source, SampleID, EthanolPercent)
 
 # View the results
 print(SplineRatesResults)
@@ -309,7 +309,7 @@ head(SplineRatesResults)
 
 MuEtOH_nest <- SplineRatesResults |>
   nest(.by = c("SampleID", "nm", "Source")) |> #want to nest by source
-  mutate(LinearFit = purrr::map(data, ~lm(mumax ~ EthanolPercent,
+  mutate(LinearFit = purrr::map(data, ~lm(mumax_hour ~ EthanolPercent,
                                             data = .x)),
          LinearTidy = purrr::map(LinearFit, tidy),
          LinearParam = purrr::map(LinearFit, glance),
@@ -323,10 +323,10 @@ MuEtOH_nest <- SplineRatesResults |>
 MuEtOH_nest |>
   unnest(cols = c(LinearPredict)) |>
   ggplot() +
-  geom_point(aes(x = EthanolPercent, y = mumax)) +
+  geom_point(aes(x = EthanolPercent, y = mumax_hour)) +
   geom_line(aes(x = EthanolPercent, y = .fitted)) +
   #geom_point(aes(x = EthanolPercent, y = .resid), colour = "red") +
-  facet_grid(cols = vars(SampleID, Source), rows = vars(nm)) +
+  facet_grid(cols = vars(Source , SampleID), rows = vars(nm)) +
   theme_bw()
 ```
 
