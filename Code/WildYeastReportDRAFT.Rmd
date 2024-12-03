@@ -2,10 +2,9 @@
 title: "Wild Yeast Report"
 date: "`r format(Sys.Date())`"
 author:
-- Carlie Barnhill^1^*
 - Jacob MacPhee^1^*
 - Kenneth McLaughlin^1^*
-
+- Carlie Barnhill^1^*
 output:
   bookdown::html_document2:
     code_folding: show
