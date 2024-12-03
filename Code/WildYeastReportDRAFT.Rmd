@@ -25,11 +25,11 @@ p.caption {
 }
 ```
 
-# Affiliations {-}
+# AFFILIATIONS {-}
 
 ^1^Mount Allison University, New Brunswick, Canada  
 
-# Acknowledgements {-}
+# ACKNOWLEDGEMENTS {-}
 
 ^1^Maximilian Berthold and ^1^Douglas A. Campbell
 ```{r}
@@ -38,7 +38,7 @@ getwd()
 ```
 
 
-# Introduction
+# INTRODUCTION 
 
 ## Aim and Objectives
 
@@ -59,7 +59,7 @@ getwd()
 - Alcohol tolerance of the yeast strains.
 
 
-# Materials & Methods  
+# MATERIALS & METHODS
 
 Sampling methods done as instructed by [@sukhvirDevelopmentAppleWine2019], [@kowallikSystematicForestSurvey2016], and [@batistaDevelopmentOptimizationNew2015]
 
@@ -197,6 +197,7 @@ MergedSpecificGravityData <- SpecificGravityData %>%
 #View(MergedSpecificGravityData)
 ```
 
+# RESULTS
 
 # Yeast Viability Analysis
 
@@ -668,7 +669,7 @@ scale_shape_discrete(labels = function(x) paste(x, "°C"))  # attach °C to lege
 
 ```
 
-# Summary
+# SUMMARY AND DISCUSSION
 
 - We successfully isolated yeast from apple tree bark, oak tree leaves, and brewer yeast. 
 - We were not successful in isolating yeast from the apple fruit, oak tree bark and the negative control (air) samples.
@@ -698,7 +699,7 @@ scale_shape_discrete(labels = function(x) paste(x, "°C"))  # attach °C to lege
 - Further analysis should compare the viability of the wild strains, at all the culturing conditions studied, to see if the wild strains follow a similar trend as the brewers yeast.
 - YM grown at 37 °C are the optimum culturing conditions for obtaining the greatest yeast viability for the brewers yeast.
 
-# Bibliography
+# BIBLIOGRAPHY
 
 
 
