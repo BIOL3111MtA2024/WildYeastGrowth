@@ -203,8 +203,10 @@ MergedSpecificGravityData <- SpecificGravityData %>%
 
 ## The percent of living yeast compared to total yeast counts and the culturing conditions of the isolated yeast.
 - Viability is the percent of living cells within a given sample.
-- There were no major differences between the viability of commercial yeast and the wild yeast strains. 
-- YM grown at 37 °C are the optimum culturing conditions for obtaining the greatest yeast viability.
+- AppleTreeBark yeast was found to have the greatest viability, followed by brewers yeast, and OakLeaves yeast.
+- We were able to determine a trend for culturing conditions for the brewers yeast, however, were not able to for the wild strains.
+- Further analysis should compare the viability of the wild strains, at all the culturing conditions studied, to see if the wild strains follow a similar trend as the brewers yeast.
+- YM grown at 37 °C are the optimum culturing conditions for obtaining the greatest yeast viability for the brewers yeast.
 ```{r Viability Percent by Sample ID}
 MergedBrothPlateData |>  
 filter(!is.na(SampleID)) |>  
@@ -499,6 +501,11 @@ MuEtOH_nest <- SplineRatesResults |>
  
 ## The relationship between MuMax (hours) ethanol concentration (% v/v) of the isolated yeast strains, faceted by source and culturing conditions.
 
+- The wild yeast strains appeared to experience growth inhibition at 2% (v/v) ethanol, where no major growth was observed at the other ethanol concentrations.
+- It is also plausible that the wild strains experienced a lag phase longer than the 15 hour range of the ethanol tolerance study, which would correlate to no major growth.
+- For the brewers yeast, it is clear that as the ethanol concentration increased, the lag phase also increased.
+- While the brewers yeast experienced an increased lag phase as ethanol concentration increased, all samples were still able to grow in the higher ethanol concentrations.
+
 ```{r plot mumax vs EtOh}
 #Set label for GrowthTempC
 temp_labeller <- function(value) {
@@ -679,13 +686,17 @@ scale_shape_discrete(labels = function(x) paste(x, "°C"))  # attach °C to lege
 ### Initial Hypothesis: Commercial yeast will outperform the wild yeast strains in alcohol production rate and alcohol tolerance [@scholesWildYeastLaboratory2021]. 
 
 - They had a lower lag phase, however, since the wild strains were not allowed to reach completion we cannot fully compare alcohol production rates.
-- The commercial yeast performed well in the alcohol tolerance study, but do to the minimal growth of the wild yeast strains we could not compared these results effectively
+- The wild yeast strains appeared to experience growth inhibition at 2% (v/v) ethanol, where no major growth was observed at the other ethanol concentrations.
+- It is also plausible that the wild strains experienced a lag phase longer than the 15 hour range of the ethanol tolerance study, which would correlate to no major growth.
+- For the brewers yeast, it is clear that as the ethanol concentration increased, the lag phase also increased.
+- While the brewers yeast experienced an increased lag phase as ethanol concentration increased, all samples were still able to grow in the higher ethanol concentrations.
 
 ### Initial Hypothesis: Commercial yeast will be more viable than the wild yeast strains [@scholesWildYeastLaboratory2021].
 
-- There were no major differences between the viability of commercial yeast and the wild yeast strains. 
-
-- YM and 37 degree Celsius were found to be the ideal growth conditions for all isolated strains.
+- AppleTreeBark yeast was found to have the greatest viability, followed by brewers yeast, and OakLeaves yeast.
+- We were able to determine a trend for culturing conditions for the brewers yeast, however, were not able to for the wild strains.
+- Further analysis should compare the viability of the wild strains, at all the culturing conditions studied, to see if the wild strains follow a similar trend as the brewers yeast.
+- YM grown at 37 °C are the optimum culturing conditions for obtaining the greatest yeast viability for the brewers yeast.
 
 # Bibliography
 
