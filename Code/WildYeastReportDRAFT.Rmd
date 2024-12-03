@@ -2,9 +2,10 @@
 title: "Wild Yeast Report"
 date: "`r format(Sys.Date())`"
 author:
+- Carlie Barnhill^1^*
 - Jacob MacPhee^1^*
 - Kenneth McLaughlin^1^*
-- Carlie Barnhill^1^*
+
 output:
   bookdown::html_document2:
     code_folding: show
@@ -33,6 +34,20 @@ p.caption {
 File import functions read files into R objects, commonly data frames. 
 
 # Materials & Methods  
+
+# AppleTreeBark Yeast Sample Grown at 37 degree Celsius in YPD Broth (SampleID 7)
+![](/Users/jake/Desktop/BIOL-3111/Term Project/Clean Kitchen/WildYeastGrowth/Code/07.png)
+
+# Brewers Yeast Sample Grown at 37 degree Celsius in YPD Broth (SampleID 19)
+![](/Users/jake/Desktop/BIOL-3111/Term Project/Clean Kitchen/WildYeastGrowth/Code/19.png)
+
+# OakLeaves Yeast Sample Grown at 37 degree Celsius in YPD Broth (SampleID 36)
+![](/Users/jake/Desktop/BIOL-3111/Term Project/Clean Kitchen/WildYeastGrowth/Code/36.png)
+
+# Brewers Yeast Sample Grown at 20 degree Celsius in YM Broth (SampleID 41)
+![](/Users/jake/Desktop/BIOL-3111/Term Project/Clean Kitchen/WildYeastGrowth/Code/41.png)
+
+
 ## Set chunk options
 Formatted display of content from .md file on GitHub site.
 Upon knitr figures will be saved to 'Figs/'
@@ -75,7 +90,7 @@ sheet_url <- "https://docs.google.com/spreadsheets/d/17dDzASxhWDbVpQFXb201vT2oB0
 ATMetaData <- read_sheet(sheet_url)
 
 # View the imported data (optional)
-#View(ATMetaData)
+View(ATMetaData)
 ```
 
 
@@ -150,14 +165,14 @@ DataDictionnary <- read_sheet(sheet_url)
 ```{r Merge BrothPlateData with MetaData}
 MergedBrothPlateData <- BrothPlateData %>%
   left_join(MetaData, by = "SampleID")
-head(MergedBrothPlateData)
+#head(MergedBrothPlateData)
 ```
 
 # Merge SpecificGravityData with MetaData, via leftjoin().
 ```{r Merge BrothPlateData with MetaData}
 MergedSpecificGravityData <- SpecificGravityData %>%
   left_join(MetaData, by = "SampleID")
-head(MergedSpecificGravityData)
+#head(MergedSpecificGravityData)
 #View(MergedSpecificGravityData)
 ```
 
@@ -197,7 +212,7 @@ FileEncodeMD
 ```{r dataread}
 ODData <- readr::read_csv(file =  DataFiles[1])
 
-head(ODData)
+#head(ODData)
 
 
 #data.table::fread(text = readLines(DataFiles[1], skipNul = T))
@@ -231,7 +246,7 @@ ODData <- ODData %>%
 
 
 ```{r verify rename worked}
-head(ODData)
+#head(ODData)
 ```
 
 # Lost labels for OD680 & OD720 in hacked import; regenerate them.
@@ -247,7 +262,7 @@ ODData <- ODData |>
 ODData <- ODData |>
   mutate(nm = ifelse(row_number() %in% c(1:15), 680, 720), .before = Time)
 
-head(ODData)
+#head(ODData)
 ```
 
 
@@ -260,7 +275,7 @@ ODDataLong |>
   geom_point(aes(x = Time, y = OD)) +
   facet_grid(cols = vars(nm))
 
-head(ODDataLong)
+#head(ODDataLong)
 ```
 
 
@@ -291,7 +306,7 @@ Merged_ATData <- Merged_ATData %>%
   filter(!Well %in% c("G10", "G11", "G12", "H10", "H11", "H12"))
 
 # Verify
-table(Merged_ATData$Well) 
+# table(Merged_ATData$Well) 
 ```
 
 # Filter merged data by wavelength, inorder to make  growth curves for OD720 and OD680.
@@ -313,9 +328,9 @@ Merged_ATData <- Merged_ATData %>%
 
 # Verify structure prior to spline test for MuMax, problematic structure, will cause problems.
 ```{r Verify Merged_ATData Structure}
-#Verify dataset structure
-str(Merged_ATData)  
-head(Merged_ATData) 
+# Verify dataset structure
+# str(Merged_ATData)  
+# head(Merged_ATData) 
 ```
 
 # Growth Curves at OD720.
@@ -380,7 +395,7 @@ SplineRatesResults <- SplineRates_nest |>
   select(nm, Well, Mumax_hour, rsquared, Source, SampleID, EthanolConcentration, BrothType, GrowthTempC)
 
 # View the results
-print(SplineRatesResults)
+# print(SplineRatesResults)
 
 ```
 
@@ -390,7 +405,7 @@ print(SplineRatesResults)
 SplineRatesResults <- na.omit(SplineRatesResults)
 
 # Check the result
-head(SplineRatesResults)
+# head(SplineRatesResults)
 
 #View(SplineRatesResults)
 
@@ -415,13 +430,14 @@ MuEtOH_nest <- SplineRatesResults |>
 
 # Plot Mumax vs EtOH
 ```{r plot mumax vs EtOh}
+#Set label for GrowthTempC
 temp_labeller <- function(value) {
   paste(value, "°C")
 }
 nm_labeller <- function(value) {
   paste(value, "nm")
 }
-
+#Plot Linear model
 MuEtOH_nest |>
   unnest(cols = c(LinearPredict)) |>
   ggplot() +
