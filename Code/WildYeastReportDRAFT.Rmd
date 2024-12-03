@@ -2,7 +2,7 @@
 title: "Wild Yeast Report"
 date: "`r format(Sys.Date())`"
 author:
-- Carlie Barnhill^1^*
+- Charlie O'Brien^1^*
 - Jacob MacPhee^1^*
 - Kenneth McLaughlin^1^*
 
@@ -32,16 +32,22 @@ p.caption {
 
 ^1^Maximilian Berthold and ^1^Douglas A. Campbell
 
-# Overview
-
-File import functions read files into R objects, commonly data frames. 
 
 # Introduction
 
+## Aim and Objectives
+
+- This experiment aims to isolate wild yeast from the bark and leaves of oak trees and the fruit and bark of apple trees. 
+- We tested wild yeast strains against commercial yeast for the rate of alcohol production, alcohol tolerance, varied culturing temperatures, and the qualitative observations of strains during isolation and utilization.
 - We isolated yeast from apple tree bark, oak tree leaves, and brewer yeast from our cultures where   the apple fruit, oak tree bark and the negative control (air) samples did not contain any yeast.
 - Viability (%) of the isolated yeast strains.
 - The specific gravity from the brew of each yeast strain isolated.
 - Alcohol tolerance of the yeast strains.
+
+## Hypothesis
+
+- We hypothesize that commercial yeast will outperform the wild yeast strains in alcohol production rate and alcohol tolerance. 
+- We also hypothesize that commercial yeast will be more viable than the wild yeast strains.
 
 # Materials & Methods  
 
@@ -308,10 +314,10 @@ ODData <- ODData |>
 ```{r ODData long}
 ODDataLong <- pivot_longer(ODData, cols = -c(nm, Time, TempC), names_to = "Well", values_to = "OD")
 
-ODDataLong |>
-  ggplot() +
-  geom_point(aes(x = Time, y = OD)) +
-  facet_grid(cols = vars(nm))
+#ODDataLong |>
+  #ggplot() +
+  #geom_point(aes(x = Time, y = OD)) +
+  #facet_grid(cols = vars(nm))
 
 #head(ODDataLong)
 ```
@@ -371,7 +377,7 @@ Merged_ATData <- Merged_ATData %>%
 # head(Merged_ATData) 
 ```
 
-## The change in absorbance at 720 nm over 15 hours of each stain when exposed to varying ethanol concentrations of 2 – 12 % (v/v).
+## The change in absorbance at 720 nm over 14 hours of each stain when exposed to varying ethanol concentrations of 2 – 12 % (v/v).
 ```{r Growth Curves at OD720}
 
 Merged_ATData <- Merged_ATData %>%
@@ -400,7 +406,7 @@ labs(y = "Optical Density (OD) at 720 nm", x = "Time (hours)", shape = "Temperat
 color = "Broth Type")
 ```
 
-## The change in absorbance at 680 nm over 15 hours of each stain when exposed to varying ethanol concentrations of 2 – 12 % (v/v).
+## The change in absorbance at 680 nm over 14 hours of each stain when exposed to varying ethanol concentrations of 2 – 12 % (v/v).
 
 ```{r Growth Curves at OD680}
 Merged_ATData <- Merged_ATData %>%
