@@ -203,6 +203,7 @@ MergedSpecificGravityData <- SpecificGravityData %>%
 
 
 ## The percent of living yeast compared to total yeast counts and the culturing conditions of the isolated yeast.
+
 - Viability is the percent of living cells within a given sample.
 - AppleTreeBark yeast was found to have the greatest viability, followed by brewers yeast, and OakLeaves yeast.
 - We were able to determine a trend for culturing conditions for the brewers yeast, however, were not able to for the wild strains.

@@ -25,11 +25,11 @@ p.caption {
 }
 </style>
 
-# Affiliations {-}
+# AFFILIATIONS {-}
 
 ^1^Mount Allison University, New Brunswick, Canada  
 
-# Acknowledgements {-}
+# ACKNOWLEDGEMENTS {-}
 
 ^1^Maximilian Berthold and ^1^Douglas A. Campbell
 
@@ -42,7 +42,7 @@ getwd()
 ```
 
 
-# Introduction
+# INTRODUCTION 
 
 ## Aim and Objectives
 
@@ -63,7 +63,7 @@ getwd()
 - Alcohol tolerance of the yeast strains.
 
 
-# Materials & Methods  
+# MATERIALS & METHODS
 
 Sampling methods done as instructed by [@sukhvirDevelopmentAppleWine2019], [@kowallikSystematicForestSurvey2016], and [@batistaDevelopmentOptimizationNew2015]
 
@@ -194,14 +194,18 @@ MergedSpecificGravityData <- SpecificGravityData %>%
 #View(MergedSpecificGravityData)
 ```
 
+# RESULTS
 
 # Yeast Viability Analysis
 
 
 ## The percent of living yeast compared to total yeast counts and the culturing conditions of the isolated yeast.
+
 - Viability is the percent of living cells within a given sample.
-- There were no major differences between the viability of commercial yeast and the wild yeast strains. 
-- YM grown at 37 °C are the optimum culturing conditions for obtaining the greatest yeast viability.
+- AppleTreeBark yeast was found to have the greatest viability, followed by brewers yeast, and OakLeaves yeast.
+- We were able to determine a trend for culturing conditions for the brewers yeast, however, were not able to for the wild strains.
+- Further analysis should compare the viability of the wild strains, at all the culturing conditions studied, to see if the wild strains follow a similar trend as the brewers yeast.
+- YM grown at 37 °C are the optimum culturing conditions for obtaining the greatest yeast viability for the brewers yeast.
 
 ``` r
 MergedBrothPlateData |>  
@@ -417,7 +421,7 @@ mutate(EthanolConcentrationLabel = factor(paste0(EthanolConcentration, "% (v/v)"
 
 Merged_ATData |>
 filter(nm == 680) |>
-ggplot(aes(x = Time_hour, y = OD, color = BrothType, shape = as.factor(GrowthTempC), group = interaction(Well, BrothType, GrowthTempC))) +
+ggplot(aes(x = Time_hour, y = OD, color = BrothType, group = interaction(Well, BrothType, GrowthTempC))) +
 geom_line() +
 geom_point() +
 facet_grid(
@@ -448,7 +452,7 @@ mutate(EthanolConcentrationLabel = factor(paste0(EthanolConcentration, "% (v/v)"
 
 Merged_ATData |>
 filter(nm == 720) |>
-ggplot(aes(x = Time_hour, y = OD, color = BrothType, shape = as.factor(GrowthTempC), group = interaction(Well, BrothType, GrowthTempC))) +
+ggplot(aes(x = Time_hour, y = OD, color = BrothType, group = interaction(Well, BrothType, GrowthTempC))) +
 geom_line() +
 geom_point() +
 facet_grid(
@@ -461,7 +465,7 @@ values = c(17, 16), # shapes for the legend
 labels = paste0(unique(Merged_ATData$GrowthTempC), "°C")
 ) +
 labs(
-y = "Optical Density (OD) at 680 nm",
+y = "Optical Density (OD) at 720 nm",
 x = "Time (hours)",
 shape = "Temperature", # legend title
 color = "Broth Type"
@@ -523,6 +527,11 @@ MuEtOH_nest <- SplineRatesResults |>
 ```
  
 ## The relationship between MuMax (hours) ethanol concentration (% v/v) of the isolated yeast strains, faceted by source and culturing conditions.
+
+- The wild yeast strains appeared to experience growth inhibition at 2% (v/v) ethanol, where no major growth was observed at the other ethanol concentrations.
+- It is also plausible that the wild strains experienced a lag phase longer than the 15 hour range of the ethanol tolerance study, which would correlate to no major growth.
+- For the brewers yeast, it is clear that as the ethanol concentration increased, the lag phase also increased.
+- While the brewers yeast experienced an increased lag phase as ethanol concentration increased, all samples were still able to grow in the higher ethanol concentrations.
 
 
 ``` r
@@ -713,7 +722,7 @@ scale_shape_discrete(labels = function(x) paste(x, "°C"))  # attach °C to lege
 
 ![](Figs/Apparent Attenuation by Source-1.png)<!-- -->
 
-# Summary
+# SUMMARY AND DISCUSSION
 
 - We successfully isolated yeast from apple tree bark, oak tree leaves, and brewer yeast. 
 - We were not successful in isolating yeast from the apple fruit, oak tree bark and the negative control (air) samples.
@@ -731,15 +740,19 @@ scale_shape_discrete(labels = function(x) paste(x, "°C"))  # attach °C to lege
 ### Initial Hypothesis: Commercial yeast will outperform the wild yeast strains in alcohol production rate and alcohol tolerance [@scholesWildYeastLaboratory2021]. 
 
 - They had a lower lag phase, however, since the wild strains were not allowed to reach completion we cannot fully compare alcohol production rates.
-- The commercial yeast performed well in the alcohol tolerance study, but do to the minimal growth of the wild yeast strains we could not compared these results effectively
+- The wild yeast strains appeared to experience growth inhibition at 2% (v/v) ethanol, where no major growth was observed at the other ethanol concentrations.
+- It is also plausible that the wild strains experienced a lag phase longer than the 15 hour range of the ethanol tolerance study, which would correlate to no major growth.
+- For the brewers yeast, it is clear that as the ethanol concentration increased, the lag phase also increased.
+- While the brewers yeast experienced an increased lag phase as ethanol concentration increased, all samples were still able to grow in the higher ethanol concentrations.
 
 ### Initial Hypothesis: Commercial yeast will be more viable than the wild yeast strains [@scholesWildYeastLaboratory2021].
 
-- There were no major differences between the viability of commercial yeast and the wild yeast strains. 
+- AppleTreeBark yeast was found to have the greatest viability, followed by brewers yeast, and OakLeaves yeast.
+- We were able to determine a trend for culturing conditions for the brewers yeast, however, were not able to for the wild strains.
+- Further analysis should compare the viability of the wild strains, at all the culturing conditions studied, to see if the wild strains follow a similar trend as the brewers yeast.
+- YM grown at 37 °C are the optimum culturing conditions for obtaining the greatest yeast viability for the brewers yeast.
 
-- YM and 37 degree Celsius were found to be the ideal growth conditions for all isolated strains.
-
-# Bibliography
+# BIBLIOGRAPHY
 
 
 
