@@ -6,17 +6,17 @@ author:
 - Jacob MacPhee^1^*
 - Kenneth McLaughlin^1^*
 
+bibliography: "/Users/jake/Desktop/BIOL-3111/Term Project/Clean Kitchen/WildYeastGrowth/Code/WildYeastLibrary.bib"
 output:
-  bibliography: RPackageCitations.bib
   bookdown::html_document2:
     code_folding: hide
     keep_md: yes
-    toc: TRUE
-    toc_float: TRUE
+    toc: true
+    toc_float: true
     toc_depth: 6
-    fig_caption: yes
-editor_options: 
-  markdown: 
+    fig_caption: true
+editor_options:
+  markdown:
     wrap: 72
 ---
 ```{css, echo=FALSE}
@@ -32,6 +32,10 @@ p.caption {
 # Acknowledgements {-}
 
 ^1^Maximilian Berthold and ^1^Douglas A. Campbell
+```{r}
+getwd()
+
+```
 
 
 # Introduction
@@ -199,6 +203,7 @@ MergedSpecificGravityData <- SpecificGravityData %>%
 
 ## The percent of living yeast compared to total yeast counts and the culturing conditions of the isolated yeast.
 - Viability is the percent of living cells within a given sample.
+- There were no major differences between the viability of commercial yeast and the wild yeast strains. 
 - YM grown at 37 °C are the optimum culturing conditions for obtaining the greatest yeast viability.
 ```{r Viability Percent by Sample ID}
 MergedBrothPlateData |>  
@@ -391,7 +396,7 @@ mutate(EthanolConcentrationLabel = factor(paste0(EthanolConcentration, "% (v/v)"
 
 Merged_ATData |>
 filter(nm == 680) |>
-ggplot(aes(x = Time_hour, y = OD, color = BrothType, shape = as.factor(GrowthTempC), group = interaction(Well, BrothType, GrowthTempC))) +
+ggplot(aes(x = Time_hour, y = OD, color = BrothType, group = interaction(Well, BrothType, GrowthTempC))) +
 geom_line() +
 geom_point() +
 facet_grid(
@@ -419,7 +424,7 @@ mutate(EthanolConcentrationLabel = factor(paste0(EthanolConcentration, "% (v/v)"
 
 Merged_ATData |>
 filter(nm == 720) |>
-ggplot(aes(x = Time_hour, y = OD, color = BrothType, shape = as.factor(GrowthTempC), group = interaction(Well, BrothType, GrowthTempC))) +
+ggplot(aes(x = Time_hour, y = OD, color = BrothType, group = interaction(Well, BrothType, GrowthTempC))) +
 geom_line() +
 geom_point() +
 facet_grid(
@@ -432,7 +437,7 @@ values = c(17, 16), # shapes for the legend
 labels = paste0(unique(Merged_ATData$GrowthTempC), "°C")
 ) +
 labs(
-y = "Optical Density (OD) at 680 nm",
+y = "Optical Density (OD) at 720 nm",
 x = "Time (hours)",
 shape = "Temperature", # legend title
 color = "Broth Type"
@@ -668,14 +673,17 @@ scale_shape_discrete(labels = function(x) paste(x, "°C"))  # attach °C to lege
 - Alcohol tolerance of the yeast strains.
 - In varying culturing conditions (YM/YPD and 20/37 degree Celsius)
 
-##Our findings fully or partially support our initial hypotheses:
 
-Initial Hypothesis: Commercial yeast will outperform the wild yeast strains in alcohol production rate and alcohol tolerance [@scholesWildYeastLaboratory2021]. 
+## Our findings partially support our initial hypotheses:
+
+### Initial Hypothesis: Commercial yeast will outperform the wild yeast strains in alcohol production rate and alcohol tolerance [@scholesWildYeastLaboratory2021]. 
+
 - They had a lower lag phase, however, since the wild strains were not allowed to reach completion we cannot fully compare alcohol production rates.
 - The commercial yeast performed well in the alcohol tolerance study, but do to the minimal growth of the wild yeast strains we could not compared these results effectively
 
-Initial Hypothesis: Commercial yeast will be more viable than the wild yeast strains [@scholesWildYeastLaboratory2021].
-- Commercial yeast were more viable than the OakLeaves strain, but were less viable then the AppleTreeBark strain.
+### Initial Hypothesis: Commercial yeast will be more viable than the wild yeast strains [@scholesWildYeastLaboratory2021].
+
+- There were no major differences between the viability of commercial yeast and the wild yeast strains. 
 
 - YM and 37 degree Celsius were found to be the ideal growth conditions for all isolated strains.
 
