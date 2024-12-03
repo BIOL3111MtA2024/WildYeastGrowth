@@ -1,5 +1,5 @@
 ---
-title: "Wild Yeast Report: Vitality and Specific Gravity Study"
+title: "Wild Yeast Report"
 date: "`r format(Sys.Date())`"
 author:
 - Carlie Barnhill^1^*
@@ -24,15 +24,11 @@ p.caption {
 }
 ```
 
-
 # Affiliations {-}
 ^1^Mount Allison University, New Brunswick, Canada  
 
-*corresponding author  
-
 # Acknowledgements {-}
-Brackets minus after heading excludes heading from numbering.
-DAC was supported by the Canada Research Chairs.
+^1^Maximilian Berthold and Douglas A. Campbell
 
 # Overview
 File import functions read files into R objects, commonly data frames. 
@@ -53,6 +49,9 @@ knitr::opts_chunk$set(fig.path='Figs/')
 library(tidyverse) #core packages from Tidyverse
 library(googledrive) #access to GoogleDrive
 library(googlesheets4) #access to GoogleSheets
+library(growthrates)
+library(broom)
+library(kableExtra)
 ```
 
 ## InLine Citations of software packages added through the 'citr' option under 'Addins'.  
@@ -161,6 +160,288 @@ MergedSpecificGravityData <- SpecificGravityData %>%
   left_join(MetaData, by = "SampleID")
 head(MergedSpecificGravityData)
 #View(MergedSpecificGravityData)
+```
+
+
+# Settings for file import
+
+# Note: The .tsv file exported from the Molecular Dynamics software with encoding UTF16LE had embedded null characters that caused problems upon import.
+As a hacked solution, download the .tsv from 'Teams'.
+Import the .tsv into a new GoogleSheet.
+Delete the first two rows of the file.
+Export from GoogleSheet as .csv.
+Move the .csv to the .Rproj folder.
+A better way would be code to read the problematic UTF16LE file with null characters.
+The issue relates to a complex file structure exported from Molecular Dynamics software.
+```{r variable names for file import & processing MOLECULAR DEVICES}
+Project <- "WildYeast"
+
+#set variables for file import & processing
+DataPath <- file.path("..", "Data", "RawData", fsep = .Platform$file.sep)
+file_id <- ".csv"
+
+# DataOneDrive <- "~/OneDrive - Mount Allison University/BIOL2201_2024/StudentDataTest"
+
+```
+
+# List Data file(s)
+```{r datafiles}
+DataFiles <- list.files(path = DataPath, pattern = file_id, full.names = TRUE)
+
+DataFiles
+
+FileEncodeMD <- as.character(guess_encoding(file = DataFiles[1])[1,1])
+FileEncodeMD
+```
+
+# Read ODData file(s) into form readable by R
+```{r dataread}
+ODData <- readr::read_csv(file =  DataFiles[1])
+
+head(ODData)
+
+
+#data.table::fread(text = readLines(DataFiles[1], skipNul = T))
+
+
+```
+
+
+```{r read all files}
+#code for reading multiple files, if needed
+# read_delim_plus <- function(flnm, delimiter, headerrows, fileencode){read_delim(flnm, delim = delimiter,  col_names = TRUE,  skip = headerrows, escape_double = FALSE,  locale = locale(encoding = fileencode), trim_ws = TRUE) |>
+#     mutate(Filename = flnm)
+#   }
+# 
+# ODData <- DataFiles |>
+#   map_df(~read_delim_plus(flnm = ., delimiter = DelimiterMD,  headerrows = HeaderRowsMD,  fileencode = FileEncodeMD))
+# 
+# head(ODData)
+```
+
+# Molecular Dynamics exports problematic variable names; fix them
+```{r variable names}
+colnames(ODData)
+```
+
+```{r rename varible}
+# Rename column using pattern matching
+ODData <- ODData %>%
+  rename_with(~ gsub("Temperature.*", "TempC", .x))  # Replace any name starting with "Temperature"
+```
+
+
+```{r verify rename worked}
+head(ODData)
+```
+
+# Lost labels for OD680 & OD720 in hacked import; regenerate them.
+
+```{r OD labels}
+
+#remove blank rows by filtering out rows where Temp_C is NA
+ODData <- ODData |>
+  filter(!is.na(TempC))
+
+#this is a hack solution, knowing there are only 15 rows of data
+#better way would be to keep the OD settings during import
+ODData <- ODData |>
+  mutate(nm = ifelse(row_number() %in% c(1:15), 680, 720), .before = Time)
+
+head(ODData)
+```
+
+
+# For plotting it is easier to have data in 'long' format, where Well becomes a Value of a Variable, rather than a separate variable for each well.
+```{r ODData long}
+ODDataLong <- pivot_longer(ODData, cols = -c(nm, Time, TempC), names_to = "Well", values_to = "OD")
+
+ODDataLong |>
+  ggplot() +
+  geom_point(aes(x = Time, y = OD)) +
+  facet_grid(cols = vars(nm))
+
+head(ODDataLong)
+```
+
+
+# Data in long format (rds).
+```{r save rds}
+saveRDS(ODDataLong, file = file.path("..", "Data", "ProcessedData", "ODDataLong.rds"))
+```
+
+# Convert time from h:m:s format to numeric format (1,2,3,4,5,6,7,8 etc.)
+```{r}
+ODDataLong <- ODDataLong %>% 
+  mutate(Time_numeric = as.numeric(hms(Time)) / 3600)  # Converts to hours
+```
+
+# Merge ODDataLong with Metadata before attempting data analyses.
+```{r Merge ODData with Metadata}
+# Merge ODData with ATMetaData
+Merged_ATData <- ODDataLong %>%
+  left_join(ATMetaData, by = "Well")
+#View(Merged_ATData)
+```
+
+# Filter out wells that had no media/innoculant to avoid problems in analysis.
+```{r Filter NA Results}
+
+# Exclude wells G10, G11, G12, H10, H11, H12
+Merged_ATData <- Merged_ATData %>%
+  filter(!Well %in% c("G10", "G11", "G12", "H10", "H11", "H12"))
+
+# Verify
+table(Merged_ATData$Well) 
+```
+
+# Filter merged data by wavelength, inorder to make  growth curves for OD720 and OD680.
+```{r Filter Data by nm}
+# Filter data for OD 680 nm
+Merged_ATData_680 <- Merged_ATData %>%
+  filter(nm == 680)
+
+# Filter data for OD 720 nm
+Merged_ATData_720 <- Merged_ATData %>%
+  filter(nm == 720)
+```
+
+# Double check data is in time numeric form for analyses.
+```{r Convert to time numeric}
+Merged_ATData <- Merged_ATData %>% 
+  mutate(Time_hour = as.numeric(hms(Time)) / 3600)  # Converts to hours
+```
+
+# Verify structure prior to spline test for MuMax, problematic structure, will cause problems.
+```{r Verify Merged_ATData Structure}
+#Verify dataset structure
+str(Merged_ATData)  
+head(Merged_ATData) 
+```
+
+# Growth Curves at OD720.
+```{r Growth Curves at OD720}
+
+Merged_ATData |>
+  filter(nm == 720)|>
+ggplot(aes(x = Time_hour, y = OD, color = as.factor(SampleID), group = Well)) +
+  geom_line() +
+  geom_point() +
+  facet_grid(rows = vars(EthanolConcentration)) + 
+#  labs(
+ #   title = "Growth Curves for Each Sample (OD at 720 nm)",
+  #  x = "Time (hours)", 
+   # y = "Optical Density (OD720)",
+    #color = "Ethanol (%)"
+  #) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "bottom"  
+  )
+```
+
+# Growth Curves at OD680.
+```{r Growth Curves at OD680}
+Merged_ATData |>
+  filter(nm == 680)|>
+ggplot(aes(x = Time_numeric, y = OD, color = as.factor(SampleID), group = Well)) +
+  geom_line() +
+  geom_point() +
+  facet_grid(rows = vars(EthanolConcentration)) + 
+#  labs(
+ #   title = "Growth Curves for Each Sample (OD at 720 nm)",
+  #  x = "Time (hours)", 
+   # y = "Optical Density (OD720)",
+    #color = "Ethanol (%)"
+  #) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "bottom"  
+  )
+```
+
+# Spline Fitting for Determining MuMax and R-squared for all Wells.
+```{r Run splines test for MuMax and R-squared}
+
+# Step 2: Spline Fitting and Parameter Extraction
+SplineRates_nest <- Merged_ATData |> 
+  group_by(nm, Well, Source, SampleID, EthanolConcentration, BrothType, GrowthTempC) |> 
+  nest() |> 
+  mutate(SplineFit = purrr::map(data, ~tryCatch(
+      growthrates::fit_spline(.$Time_hour, .$OD),  # Fit spline
+      error = function(e) NULL  # Handle errors gracefully
+    )), # Fit spline with error handling
+Mumax_hour = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "par", "mumax") else NA_real_),  
+    rsquared = purrr::map_dbl(SplineFit, ~if (!is.null(.)) pluck(., "rsquared") else NA_real_))|> 
+  ungroup()
+
+SplineRatesResults <- SplineRates_nest |> 
+  select(nm, Well, Mumax_hour, rsquared, Source, SampleID, EthanolConcentration, BrothType, GrowthTempC)
+
+# View the results
+print(SplineRatesResults)
+
+```
+
+# Cleaned the resulting merged data, "Merged_ATMetaData_MuMax", before plotting MuMax vs EtOH concentration.
+```{r Filter NA values}
+# Remove rows with any NA values
+SplineRatesResults <- na.omit(SplineRatesResults)
+
+# Check the result
+head(SplineRatesResults)
+
+#View(SplineRatesResults)
+
+```
+
+# Fit Linear Models
+```{r}
+#define exponential decay function for data fitting.
+#exp_decay <- function(x, i, mu){y = i * exp(mu * x)}
+
+#need to merge left_join(Merged_ATMetaData_MuMax_clean, true MetaData so you can talk about growth responses to EtOH in a sensible manner
+ # left_join(Merged_ATMetaData_MuMax_clean, 
+
+MuEtOH_nest <- SplineRatesResults |>
+  nest(.by = c("SampleID", "nm", "Source", "BrothType", "GrowthTempC")) |> #want to nest by source
+  mutate(LinearFit = purrr::map(data, ~lm(Mumax_hour ~ EthanolConcentration,
+                                            data = .x)),
+         LinearTidy = purrr::map(LinearFit, tidy),
+         LinearParam = purrr::map(LinearFit, glance),
+         LinearPredict = purrr::map(LinearFit, augment))
+```
+
+# Plot Mumax vs EtOH
+```{r plot mumax vs EtOh}
+temp_labeller <- function(value) {
+  paste(value, "°C")
+}
+nm_labeller <- function(value) {
+  paste(value, "nm")
+}
+
+MuEtOH_nest |>
+  unnest(cols = c(LinearPredict)) |>
+  ggplot() +
+  geom_point(aes(x = EthanolConcentration, y = Mumax_hour)) +
+  geom_line(aes(x = EthanolConcentration , y = .fitted)) +
+  #geom_point(aes(x = Ethanol (v/v %), y = .resid), colour = "red") +
+  facet_grid(cols = vars(Source, BrothType, GrowthTempC), rows = vars(nm), labeller = labeller(GrowthTempC = temp_labeller , nm = nm_labeller)) +
+   labs(x = "Ethanol Concentration % (v/v)") +
+  theme_bw()
+```
+
+# Show fit parameters
+```{r show mumax vs EtOH fit parameters}
+MuEtOH_nest |>
+unnest(cols = c(LinearTidy)) |>
+ select(-c(data, LinearFit, LinearParam, LinearPredict)) |>
+  select(-c(statistic)) |>
+  pivot_wider(id_cols = c(SampleID, nm), names_from = term, values_from = c(estimate, std.error, p.value)) |>
+  kable()
 ```
 
 # Percent of living yeast compared to total yeast from each sample ID containing yeast graphing on bar graph
@@ -280,6 +561,15 @@ scale_shape_discrete(labels = function(x) paste(x, "°C"))  # attach °C to lege
 
 # Finding out the atenuation of the sample this will identify the efficency of the yeast strain by comparing the sugar content in the initial wart to the amount of sugars left over giving a percent of sugars consumed and converted to alcohol or CO2
 ```{r Apparent Attenuation by Source}
+# Calculate Apparent Attenuation for Each Sample
+AttenuationData <- MergedSpecificGravityData %>%
+group_by(Source , BrothType , GrowthTempC) %>%  # Include Source for grouping
+summarize(InitialSG = max(SpecificGravity, na.rm = TRUE),  # Initial SG is the max
+FinalSG = min(SpecificGravity, na.rm = TRUE),    # Final SG is the min
+.groups = "drop") %>%
+mutate(ApparentAttenuation = ((InitialSG - FinalSG) / (InitialSG - 1)) * 100)
+
+# Plot Apparent Attenuation Data by Source
 ggplot(AttenuationData, aes(x = Source, y = ApparentAttenuation, color = BrothType, shape = as.factor(GrowthTempC))) +
 geom_point(size = 4) +
 coord_cartesian(ylim = c(0, 100)) +
