@@ -182,7 +182,7 @@ MergedBrothPlateData <- BrothPlateData %>%
 
 # Merge SpecificGravityData with MetaData, via leftjoin().
 
-```{r Merge BrothPlateData with MetaData}
+```{r Merge SpecificGravityData with MetaData}
 MergedSpecificGravityData <- SpecificGravityData %>%
   left_join(MetaData, by = "SampleID")
 #head(MergedSpecificGravityData)
